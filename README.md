@@ -1,0 +1,241 @@
+# WinSentinel
+
+> **See what your Windows system is doing. Detect what shouldn't be happening. Respond safely.**
+
+WinSentinel is a transparent, local-first, defensive host-security and activity-monitoring CLI for
+Windows 10/11 — a lightweight, educational EDR. It shows *what* is happening, explains *why*
+something may be suspicious, and leaves every response decision to you.
+
+It sends no telemetry, never hides itself, and never takes automatic action.
+
+## Status
+
+**All 14 phases are complete.** WinSentinel ships as a CLI and as a single-file
+`ThreatLens.exe`; running the executable with no arguments opens the live btop-style dashboard.
+
+| Area | What works |
+|------|-----------|
+| Visibility | Processes, lineage, sockets (owning PID + service), persistence/autostart, file activity |
+| Correlation | Process ↔ network ↔ lineage, joined by PID **and** kernel creation time (PID-reuse safe) |
+| Detection | 17 evidence-based rules across origin, signature, masquerade, lineage, execution, network, persistence and file activity |
+| Scoring | Noisy-OR risk scoring with a corroboration bonus and conservative caps; alerts you triage |
+| Storage | Local SQLite (WAL), migrations, retention, crash-safe batched writes |
+| Dashboard | Live multi-panel screen (`monitor`, the default) with keyboard controls |
+| Response | Suspend / resume / terminate with a protected-process safety layer and PID-reuse guard; firewall block/unblock; every action confirmed and audited |
+| Baselines | Capture a known-good picture, then see exactly what's new; allowlist by path / SHA256 / signer |
+
+Deferred as clearly-scoped roadmap items: event-log ingestion and per-process DNS (both gated
+behind Administrator rights and machine policy — see [architecture §15](docs/architecture.md#15-implementation-phases)).
+
+## Requirements
+
+* Windows 10 (1709+) or Windows 11, 64-bit
+* Python 3.12+
+* No administrator rights required (see [Permissions](#permissions))
+
+## Installation
+
+### Option A — the standalone executable
+
+Build a single-file `ThreatLens.exe` that needs no Python installed:
+
+```powershell
+py -3.12 -m venv .venv
+.venv\Scripts\activate
+pip install -e ".[dev]"          # dev extras include PyInstaller
+pyinstaller ThreatLens.spec --noconfirm
+```
+
+This produces `dist\ThreatLens.exe` (~17 MB). Copy it anywhere and run it:
+
+```powershell
+.\ThreatLens.exe                 # opens the live dashboard
+.\ThreatLens.exe processes       # or any command
+```
+
+Double-clicking `ThreatLens.exe` in a terminal (or from Explorer) with no arguments launches the
+btop-style dashboard.
+
+### Option B — from source
+
+```powershell
+py -3.12 -m venv .venv
+.venv\Scripts\activate
+pip install -e .
+winsentinel --help
+```
+
+If activation is blocked by the execution policy, run
+`Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` first (current window only), or call
+`.venv\Scripts\winsentinel.exe` directly. (The pip console command is `winsentinel`; the packaged
+executable is `ThreatLens.exe` — same program.)
+
+## Usage
+
+```powershell
+# Processes
+winsentinel processes --sort memory --limit 15
+winsentinel processes --name svchost --verify   # + SHA256 and Authenticode signature
+winsentinel process 4832                        # one process: image, signature, resources, lineage
+winsentinel tree --pid 8592 --depth 3
+
+# Network
+winsentinel network --listening                 # every socket with owning process and service
+winsentinel network --external --json
+winsentinel connections --external --verify     # active connections grouped by process
+
+# Investigation
+winsentinel inspect 4832                        # process + sockets + communication chains + detections
+
+# Monitoring
+winsentinel monitor                             # live dashboard (q to quit)
+winsentinel monitor --stream                    # line-by-line stream of changes and detections
+winsentinel monitor --stream --events all --loopback   # include inventory, enrichment, loopback
+winsentinel monitor --json --duration 300 | Out-File -Encoding ascii events.jsonl
+winsentinel status                              # engine health (from another terminal) + self-test
+
+# Response (confirmed + audited; firewall needs admin)
+winsentinel suspend 4832          # freeze a process while you investigate
+winsentinel resume 4832
+winsentinel terminate 4832        # irreversible; refuses protected system processes
+winsentinel firewall block-ip 185.1.2.3
+winsentinel firewall list | unblock "WinSentinel:ip:185.1.2.3"
+
+# Baselines, allowlist, persistence, history
+winsentinel baseline create
+winsentinel baseline compare      # what's new since the baseline
+winsentinel allow sha256 <HASH> --reason "internal tool"
+winsentinel persistence           # autostart entries (Run keys, Startup, tasks, services)
+winsentinel events --type PROCESS_STARTED --since 2h
+winsentinel alerts | winsentinel alerts show <ID> | winsentinel alerts set-status <ID> resolved
+winsentinel db info | cleanup | vacuum
+
+# Rules and configuration
+winsentinel rules
+winsentinel rules show PROC-006
+winsentinel config init | show | path | validate
+```
+
+All commands accept `--json`. The full command set is in `winsentinel --help`.
+
+Global flags work before or after the command: `--json`, `-q/--quiet`, `-v/--verbose`,
+`--no-color`, `--config PATH`, `--version`, `-h/--help`.
+
+### What a detection looks like
+
+```
+12:04:11.207  SUSPICIOUS          PROC-005  Windows system binary name from an unexpected location  score +45 · HIGH confidence
+              svchost.exe (PID 2520): svchost.exe running from an unexpected directory
+              C:\Users\alice\AppData\Local\Temp\lab\svchost.exe
+              • [observed] Process is named svchost.exe, the name of a core Windows binary: svchost.exe
+              • [observed] Actual location: C:\Users\alice\AppData\Local\Temp\lab\svchost.exe
+              • [inferred] The genuine binary runs only from: c:\windows\system32, c:\windows\syswow64
+```
+
+Detections are **signals that require investigation, not verdicts**. Each carries a score
+contribution (max +60 per rule), a confidence, evidence labelled *observed* or *inferred*, MITRE
+ATT&CK references, and — in `inspect` — why it matters and what you can do.
+
+### The dashboard
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│  THREATLENS   Windows Security Monitor   v0.1.0   ● MONITORING                           │
+│ Processes  301        Connections  92        Alerts  1  (0 critical)    Uptime  00:04:12 │
+│ CPU ███──────────────  12%                   RAM ██████████████──  78%  5.7 GB/7.3 GB     │
+└──────────────────────────────────────────────────────────────── standard user · every 2s ┘
+┌─ PROCESSES  (sort: cpu) ──────────────────────┐┌─ NETWORK  (6 external/active) ───────────┐
+│ PID  PROCESS       USER        CPU%  MEM  RISK││ PID  PROCESS   REMOTE        STATE  RISK │
+│ ...                                           │└──────────────────────────────────────────┘
+│                                               │┌─ ALERTS  (1 active) ─────────────────────┐
+│                                               ││   MEDIUM  58 svchost.exe — PROC-005, ... │
+│                                               │└──────────────────────────────────────────┘
+│                                               │┌─ RECENT ACTIVITY ────────────────────────┐
+└───────────────────────────────────────────────┘└──────────────────────────────────────────┘
+          Q quit   P cpu   M mem   N name   L loopback   Space pause
+```
+
+## Detection methodology
+
+17 rules across origin, signature, masquerading, lineage, command-line, network, persistence and
+file behaviour. Full specifications, false positives and tuning:
+[`docs/detection-rules.md`](docs/detection-rules.md).
+
+* **Unknown ≠ malicious, unsigned ≠ malware.** Network and signature rules stay silent for
+  executables in trusted locations or with a valid signature; no port is "bad" by itself.
+* **Context through correlation.** Lineage is verified (a parent must predate its child); sockets are
+  joined to processes by PID *and* kernel creation time; "connected N seconds after start" uses
+  kernel timestamps.
+* **Measured false-positive control.** On the development machine, all ~295 running processes
+  produce zero detections; benign lab stand-ins (a renamed copy of `ping.exe` in Temp, an encoded
+  `Start-Sleep`) are detected with the expected rules.
+* **No automatic response.** Detection code cannot suspend, terminate or block anything.
+* **Combined risk.** Per-process detections combine by noisy-OR, weighted by confidence, plus a
+  bonus when independent categories agree. All-LOW evidence is capped at 39 and single-category
+  evidence at 59, so one noisy signal cannot reach HIGH. Scores of 40+ raise an alert.
+
+## Permissions
+
+WinSentinel never requests elevation. As a **standard user** you get every process's identity,
+lineage, CPU, memory and — for nearly all processes — executable path, hash and signature, plus all
+sockets with their owning process. Command line, user and integrity level are available for your
+own processes. **Running elevated** adds those for SYSTEM and other users' processes (and lets
+command-line rules evaluate them). Protected processes (PPL) remain unreadable even to
+administrators. Unavailable fields always show the reason, e.g. `<access denied>`.
+
+See the full [privilege matrix](docs/architecture.md#4-privilege-matrix).
+
+## How it works
+
+* **Processes:** one `NtQuerySystemInformation` call per snapshot (~9 ms steady-state for ~275
+  processes) plus one handle per new process; a handle-free kernel query recovers exe paths when
+  access is denied.
+* **Network:** `GetExtendedTcpTable`/`GetExtendedUdpTable` with the *owner module* table class for
+  kernel socket creation times and service names.
+* **Engine:** one thread per monitor with backoff and a timeout watchdog; a bounded event bus that
+  counts drops; low-priority background enrichment; atomic status file; single-instance lock.
+  One failing collector never stops the others.
+
+Details: [`docs/windows-internals.md`](docs/windows-internals.md) · design:
+[`docs/architecture.md`](docs/architecture.md).
+
+## Limitations
+
+* Polling misses processes and connections that live shorter than the interval.
+* Parent PIDs can be spoofed and command lines rewritten by the process itself.
+* Signature revocation is not checked (no network access).
+* Location checks use default Windows ACLs, not each folder's actual ACL.
+* Scheduled tasks are only visible when running elevated (the Tasks folder is admin-only).
+* File events do not identify the writing process.
+* Event-log ingestion and per-process DNS are not implemented (both need Administrator and
+  non-default machine policy).
+* The firewall `list` command parses English `netsh` output.
+
+## Security
+
+See [SECURITY.md](SECURITY.md): what WinSentinel will never do, how it protects itself (secret
+redaction, log/terminal-injection defences, strict config and status-file validation, PID-reuse
+safety), and known limitations.
+
+## Development
+
+```powershell
+pip install -e ".[dev]"
+ruff format --check src tests; ruff check src tests
+mypy
+pytest                                   # unit tests (fakes) + integration tests (real Windows APIs)
+python scripts/generate_rule_docs.py     # after changing rule metadata
+```
+
+Integration tests only observe benign processes they spawn themselves: sleeping interpreters,
+loopback-only sockets, renamed copies of `ping.exe` pinging `127.0.0.1`, and an encoded
+`Start-Sleep`. The persistence test adds and removes one value in the current user's own `Run` key.
+No test contacts the internet.
+
+To see detections live on your own machine, use the benign lab: [`scripts/lab`](scripts/lab/README.md).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [`docs/troubleshooting.md`](docs/troubleshooting.md).
+
+## License
+
+MIT

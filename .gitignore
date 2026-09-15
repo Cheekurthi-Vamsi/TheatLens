@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# PyInstaller
+*.spec.bak
+/build/
+/dist/
+
+# Local data — never commit security telemetry
+*.db
+*.db-wal
+*.db-shm
+*.log
+config.toml
+.env

@@ -1,0 +1,86 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]  # >=77 for the PEP 639 `license = "MIT"` string
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "winsentinel"
+version = "0.1.0"
+description = "Windows host security, activity monitoring and response engine (defensive, local-first)."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [{ name = "WinSentinel contributors" }]
+keywords = ["security", "windows", "edr", "monitoring", "blue-team"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: Microsoft :: Windows :: Windows 11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Typing :: Typed",
+]
+# Windows APIs are called through ctypes, so no pywin32 dependency is needed.
+dependencies = [
+    "psutil>=6.0",
+    "rich>=13.7",
+    "pydantic>=2.7",
+    "watchdog>=4.0",  # event-driven file monitor (ReadDirectoryChangesW)
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2",
+    "mypy>=1.10",
+    "ruff>=0.5",
+    "pyinstaller>=6.6",
+]
+
+[project.scripts]
+winsentinel = "winsentinel.cli:main"
+threatlens = "winsentinel.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+winsentinel = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: exercises real Windows APIs against processes the test spawns",
+    "requires_admin: needs an elevated token; skipped otherwise",
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = "src"
+packages = ["winsentinel"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["psutil", "psutil.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF", "N", "PTH", "TRY", "C4"]
+ignore = [
+    "TRY003",  # long messages in exception constructors are fine for a CLI tool
+    "S603",    # subprocess without shell is the *safe* form; flagged calls are reviewed
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S104", "S603", "S607", "PTH"]  # S104: test data mentions 0.0.0.0
+"scripts/generate_rule_docs.py" = ["E501"]  # Markdown table rows in the template cannot be wrapped
+"scripts/lab/**" = ["S607"]  # lab scenarios deliberately launch powershell.exe / cmd.exe by name
