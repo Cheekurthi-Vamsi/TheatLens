@@ -1,8 +1,8 @@
-# WinSentinel
+# Theat Lens
 
 > **See what your Windows system is doing. Detect what shouldn't be happening. Respond safely.**
 
-WinSentinel is a transparent, local-first, defensive host-security and activity-monitoring CLI for
+Theat Lens is a transparent, local-first, defensive host-security and activity-monitoring CLI for
 Windows 10/11 — a lightweight, educational EDR. It shows *what* is happening, explains *why*
 something may be suspicious, and leaves every response decision to you.
 
