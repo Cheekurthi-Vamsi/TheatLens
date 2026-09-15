@@ -40,6 +40,7 @@ ERROR_NONE_MAPPED: Final = 1332
 PROCESS_QUERY_LIMITED_INFORMATION: Final = 0x1000
 PROCESS_SUSPEND_RESUME: Final = 0x0800
 PROCESS_TERMINATE: Final = 0x0001
+PROCESS_SET_QUOTA: Final = 0x0100
 TOKEN_QUERY: Final = 0x0008
 
 # TOKEN_INFORMATION_CLASS (winnt.h)
@@ -216,6 +217,11 @@ if sys.platform == "win32":
     _TerminateProcess = _kernel32.TerminateProcess
     _TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
     _TerminateProcess.restype = wintypes.BOOL
+
+    # psapi!EmptyWorkingSet is exported from kernel32 as K32EmptyWorkingSet since Windows 7.
+    _EmptyWorkingSet = _kernel32.K32EmptyWorkingSet
+    _EmptyWorkingSet.argtypes = [wintypes.HANDLE]
+    _EmptyWorkingSet.restype = wintypes.BOOL
 
 
 def _last_error() -> OSError:
@@ -594,6 +600,25 @@ def terminate_process(pid: int, exit_code: int = 1) -> None:
     handle = _open_for(pid, PROCESS_TERMINATE)
     try:
         if not _TerminateProcess(handle, exit_code):
+            raise _last_error()
+    finally:
+        _CloseHandle(handle)
+
+
+def empty_working_set(pid: int) -> None:
+    """Trim a process's working set.
+
+    APIs: ``OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_SET_QUOTA)`` →
+    ``K32EmptyWorkingSet``. The memory manager moves the process's pages out of physical RAM onto
+    the standby/modified lists; nothing is freed from the process's point of view, and pages it
+    touches again are faulted back in (from standby, usually without disk I/O). Standard users can
+    trim their own processes; other users' and SYSTEM processes need Administrator, and protected
+    processes refuse everyone.
+    """
+    _require_windows()
+    handle = _open_for(pid, PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_SET_QUOTA)
+    try:
+        if not _EmptyWorkingSet(handle):
             raise _last_error()
     finally:
         _CloseHandle(handle)

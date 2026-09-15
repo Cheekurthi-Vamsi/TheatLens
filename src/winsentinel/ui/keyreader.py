@@ -1,8 +1,8 @@
 """Non-blocking keyboard input for the live dashboard.
 
 Windows has no ``select`` on stdin, so we poll ``msvcrt.kbhit`` on a daemon thread and push
-decoded keys into a queue the dashboard drains each tick. Arrow keys arrive as a two-byte prefix
-(0x00 or 0xE0 then a code), which we translate to ``UP``/``DOWN``/``LEFT``/``RIGHT``.
+decoded keys into a queue the dashboard drains each tick. Navigation keys arrive as a two-character
+sequence (0x00 or 0xE0 then a scan code), which we translate to names such as ``UP`` or ``DELETE``.
 """
 
 from __future__ import annotations
@@ -12,7 +12,17 @@ import sys
 import threading
 from typing import Final
 
-_ARROWS: Final = {"H": "UP", "P": "DOWN", "K": "LEFT", "M": "RIGHT"}
+_ARROWS: Final = {
+    "H": "UP",
+    "P": "DOWN",
+    "K": "LEFT",
+    "M": "RIGHT",
+    "I": "PGUP",
+    "Q": "PGDN",
+    "G": "HOME",
+    "O": "END",
+    "S": "DELETE",
+}
 _PREFIXES: Final = ("\x00", "\xe0")
 
 

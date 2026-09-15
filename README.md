@@ -98,6 +98,7 @@ winsentinel status                              # engine health (from another te
 winsentinel suspend 4832          # freeze a process while you investigate
 winsentinel resume 4832
 winsentinel terminate 4832        # irreversible; refuses protected system processes
+winsentinel clear-ram             # trim working sets to free physical RAM
 winsentinel firewall block-ip 185.1.2.3
 winsentinel firewall list | unblock "WinSentinel:ip:185.1.2.3"
 
@@ -152,8 +153,28 @@ ATT&CK references, and — in `inspect` — why it matters and what you can do.
 │                                               │└──────────────────────────────────────────┘
 │                                               │┌─ RECENT ACTIVITY ────────────────────────┐
 └───────────────────────────────────────────────┘└──────────────────────────────────────────┘
-          Q quit   P cpu   M mem   N name   L loopback   Space pause
+                     Select a process with ↑/↓ to stop it.
+  ↑↓ select   T stop   C clear RAM   P/M/N sort   L loopback   Space pause   Q quit
 ```
+
+| Key | Action |
+|-----|--------|
+| ↑ ↓ PgUp PgDn Home End | Select a process. The highlight follows the process even when the list re-sorts |
+| **T** or **Delete** | Stop (terminate) the selected process. A panel shows its PID, name, path and user, and nothing happens until you press **Y**. Protected Windows processes are refused |
+| **C** | Clear RAM: trim the working sets of every process you can access (see below). Asks first; runs in the background |
+| P / M / N | Sort by CPU / memory / name |
+| L | Show loopback connections |
+| Space | Pause: freeze the lists so rows stop moving |
+| Q or Esc | Quit (Esc closes an open dialog first) |
+
+Every stop and clear-RAM, including cancelled and refused ones, is recorded in the audit log.
+
+**What "Clear RAM" does.** It asks Windows to move each process's idle pages out of physical
+memory (`EmptyWorkingSet`, the same as Sysinternals RAMMap's *Empty Working Sets*). "In use" RAM
+drops right away and nothing is closed or deleted. Programs page that memory back in when they
+next touch it, so they may be briefly slower. Windows already uses free RAM for caching, so this
+is useful before starting something memory-hungry, not as a routine speed-up. As a standard user
+only your own processes are trimmed; run elevated to include other processes.
 
 ## Detection methodology
 

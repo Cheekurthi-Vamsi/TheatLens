@@ -15,8 +15,11 @@ from typing import Final
 from winsentinel.core.models import ActionOutcome, ActionType, ProcessInfo, ResponseAction
 from winsentinel.errors import WinSentinelError
 from winsentinel.response.firewall_control import FirewallController, FirewallRuleSpec
+from winsentinel.response.memory import MemoryTrimmer, MemoryTrimResult
 from winsentinel.response.process_control import ProcessController
-from winsentinel.response.protection import ProtectionPolicy
+from winsentinel.response.protection import ProtectionPolicy, ProtectionVerdict
+
+TRIM_TARGET: Final = "working sets of all accessible processes"
 
 _PROCESS_ACTIONS: Final = {
     ActionType.SUSPEND_PROCESS: "suspend",
@@ -39,12 +42,14 @@ class ResponseManager:
         policy: ProtectionPolicy,
         *,
         firewall: FirewallController | None = None,
+        memory: MemoryTrimmer | None = None,
         audit: Callable[[ResponseAction], None] | None = None,
         requested_by: str | None = None,
     ) -> None:
         self._controller = controller
         self._policy = policy
         self._firewall = firewall
+        self._memory = memory
         self._audit = audit
         self._requested_by = requested_by or current_user()
 
@@ -52,6 +57,56 @@ class ResponseManager:
         if self._audit is not None:
             self._audit(action)
         return action
+
+    def record_cancelled(
+        self, action_type: ActionType, *, reason: str, process: ProcessInfo | None = None
+    ) -> ResponseAction:
+        """Audit a confirmation the user declined."""
+        target = TRIM_TARGET if process is None else f"{process.name} (PID {process.pid})"
+        return self._record(
+            ResponseAction(
+                action_type=action_type,
+                target=target,
+                process_key=None if process is None else process.process_key,
+                pid=None if process is None else process.pid,
+                reason=reason,
+                requested_by=self._requested_by,
+                outcome=ActionOutcome.CANCELLED,
+            )
+        )
+
+    # -- memory -----------------------------------------------------------------------------
+
+    @property
+    def can_trim_memory(self) -> bool:
+        return self._memory is not None
+
+    def trim_memory(self, *, reason: str) -> tuple[ResponseAction, MemoryTrimResult | None]:
+        """Empty the working sets of every process the current user may open (audited)."""
+        if self._memory is None:
+            raise WinSentinelError("memory trimming is not available")
+        base = {
+            "action_type": ActionType.TRIM_WORKING_SETS,
+            "target": TRIM_TARGET,
+            "reason": reason,
+            "requested_by": self._requested_by,
+        }
+        try:
+            result = self._memory.trim_all()
+        except (OSError, WinSentinelError) as exc:
+            failed = ResponseAction(outcome=ActionOutcome.FAILED, error=str(exc), **base)
+            return self._record(failed), None
+        details: dict[str, object] = {
+            "trimmed": result.trimmed,
+            "access_denied": result.denied,
+            "exited_or_unopenable": result.gone,
+            "freed_bytes": result.freed_bytes,
+            "duration_seconds": result.duration_seconds,
+        }
+        outcome = ActionOutcome.SUCCEEDED if result.trimmed else ActionOutcome.FAILED
+        error = None if result.trimmed else "no process could be opened for trimming"
+        action = ResponseAction(outcome=outcome, error=error, details=details, **base)
+        return self._record(action), result
 
     # -- process actions --------------------------------------------------------------------
 
@@ -93,7 +148,7 @@ class ResponseManager:
             )
         return self._record(ResponseAction(outcome=ActionOutcome.SUCCEEDED, **base))
 
-    def protection_of(self, process: ProcessInfo) -> object:
+    def protection_of(self, process: ProcessInfo) -> ProtectionVerdict:
         return self._policy.evaluate(process)
 
     # -- firewall ---------------------------------------------------------------------------

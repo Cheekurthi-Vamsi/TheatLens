@@ -60,6 +60,15 @@ def fake_system(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.delenv("WINSENTINEL_CONFIG", raising=False)
 
 
+def cli_actions() -> list[dict]:  # type: ignore[type-arg]
+    """Audit rows from the database the CLI wrote (under the patched LOCALAPPDATA)."""
+    from winsentinel.config import Config
+    from winsentinel.storage.database import Database
+
+    with Database(Config().general.resolved_database_path(), read_only=True) as db:
+        return [dict(r) for r in db.query("SELECT * FROM actions")]
+
+
 def run_json(capsys: pytest.CaptureFixture[str], *argv: str) -> dict:  # type: ignore[type-arg]
     assert cli.main(list(argv)) == ExitCode.OK
     return json.loads(capsys.readouterr().out)  # type: ignore[no-any-return]
@@ -161,6 +170,38 @@ class TestCommands:
     def test_read_commands_without_database(self, capsys: pytest.CaptureFixture[str]) -> None:
         assert cli.main(["events", "--json"]) == ExitCode.ERROR  # no DB yet
         assert "No database" in capsys.readouterr().err
+
+    def test_clear_ram_confirmed_and_audited(
+        self, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from winsentinel.response.memory import MemoryTrimmer
+
+        trimmed: list[int] = []
+        readings = iter([9_000, 4_000])
+        fake = MemoryTrimmer(
+            trim=trimmed.append, pids=lambda: [4, 1000, 2000], used_bytes=lambda: next(readings)
+        )
+        monkeypatch.setattr(cli, "MemoryTrimmer", lambda: fake)
+        doc = run_json(capsys, "clear-ram", "--yes", "--json")
+        assert doc["schema"] == "winsentinel.clear_ram"
+        assert doc["action"]["outcome"] == "SUCCEEDED"
+        assert doc["action"]["details"]["freed_bytes"] == 5_000
+        assert trimmed == [1000, 2000]
+        (row,) = [r for r in cli_actions() if r["action_type"] == "TRIM_WORKING_SETS"]
+        assert row["outcome"] == "SUCCEEDED"
+
+    def test_clear_ram_without_terminal_or_yes_is_cancelled(
+        self, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def must_not_run() -> None:
+            raise AssertionError("trimmer must not be used when cancelled")
+
+        from winsentinel.response.memory import MemoryTrimmer
+
+        monkeypatch.setattr(
+            cli, "MemoryTrimmer", lambda: MemoryTrimmer(trim=lambda _: must_not_run())
+        )
+        assert cli.main(["clear-ram", "--json"]) == ExitCode.CANCELLED
 
     def test_status_reports_engine_not_running(self, capsys: pytest.CaptureFixture[str]) -> None:
         doc = run_json(capsys, "status", "--json", "--no-self-test")

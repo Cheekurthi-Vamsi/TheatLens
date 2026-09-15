@@ -300,6 +300,25 @@ redirected, a test), the reader does nothing and the dashboard still renders.
 **API:** `OpenProcess(PROCESS_TERMINATE)` → `TerminateProcess(handle, 1)`. Immediate and
 irreversible: no cleanup handlers run, unsaved data is lost. Same permission rules as suspend.
 
+### Clear RAM (trim working sets)
+
+**API:** `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_SET_QUOTA)` →
+`K32EmptyWorkingSet` for every PID except 0 and 4.
+
+* **What it does:** the memory manager removes the process's pages from its working set onto the
+  standby/modified lists. Nothing is freed from the process's point of view; a page it touches
+  again is soft-faulted back in, usually without disk I/O. "In use" memory falls immediately.
+* **Why this and not purging the standby list:** purging standby
+  (`NtSetSystemInformation(SystemMemoryListInformation)`) throws away the file cache, which is
+  already counted as available and makes the system *slower*. It also needs Administrator plus
+  `SeProfileSingleProcessPrivilege`. WinSentinel does not do it.
+* **Permissions:** standard users trim their own processes; others need Administrator; protected
+  processes refuse everyone. Denials are counted and reported, not retried.
+* **Cost:** one handle per process; a full pass over ~300 processes takes a fraction of a second
+  to a few seconds. The dashboard runs it on a background thread.
+* **Honest limitation:** Windows keeps idle memory in use for caching on purpose, so this rarely
+  improves speed by itself.
+
 ### PID-reuse guard
 
 Before every action the process is re-read with `NtQuerySystemInformation`, and the action proceeds

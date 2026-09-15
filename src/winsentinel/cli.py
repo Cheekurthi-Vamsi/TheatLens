@@ -99,6 +99,7 @@ from winsentinel.response.firewall_control import (
     block_port_spec,
     block_program_spec,
 )
+from winsentinel.response.memory import MemoryTrimmer
 from winsentinel.response.process_control import ProcessController
 from winsentinel.response.protection import ProtectionPolicy
 from winsentinel.response.response_manager import ResponseManager, current_user
@@ -118,7 +119,7 @@ from winsentinel.ui.baseline_views import (
 from winsentinel.ui.dashboard import Dashboard
 from winsentinel.ui.detection_views import detections_section, rule_detail, rules_table
 from winsentinel.ui.event_stream import ALL_CATEGORIES, DEFAULT_CATEGORIES, EventStreamPrinter
-from winsentinel.ui.formatting import sanitize_display
+from winsentinel.ui.formatting import format_bytes, sanitize_display
 from winsentinel.ui.json_output import connection_record, envelope, json_line, write_json
 from winsentinel.ui.network_views import (
     connection_chain_text,
@@ -646,6 +647,7 @@ def cmd_monitor(ctx: AppContext) -> int:
                 alerts,
                 elevated=ctx.privileges.elevated,
                 refresh=engine.interval,
+                responses=_response_manager(ctx),
             )
             engine.subscribe("dashboard", dashboard.on_event)
         else:
@@ -687,6 +689,8 @@ def cmd_monitor(ctx: AppContext) -> int:
         except KeyboardInterrupt:
             pass
         finally:
+            if dashboard is not None:
+                dashboard.wait_for_background_work()  # let an in-flight RAM trim finish its audit
             report = engine.stop()
         detection_stats = detection.stats()
 
@@ -892,6 +896,54 @@ def _audit_recorder(ctx: AppContext) -> Callable[[ResponseAction], None]:
             logger.warning("event=AUDIT_WRITE_FAILED error=%s", exc)
 
     return record
+
+
+def _response_manager(ctx: AppContext) -> ResponseManager:
+    """Response actions available from interactive views (process control + RAM trim)."""
+    return ResponseManager(
+        ProcessController(ctx.collector()),
+        ProtectionPolicy(frozenset(ctx.config.response.protected_processes)),
+        memory=MemoryTrimmer(),
+        audit=_audit_recorder(ctx),
+    )
+
+
+def cmd_clear_ram(ctx: AppContext) -> int:
+    if not ctx.json and not ctx.quiet:
+        ctx.console.print(
+            Text(
+                "Clear RAM trims the working set of every process you can access. Nothing is "
+                "closed; programs page memory back in when needed and may be briefly slower.",
+                style=colors.MUTED,
+            )
+        )
+        if not ctx.privileges.elevated:
+            ctx.console.print(
+                Text(
+                    "As a standard user, only your own processes can be trimmed.",
+                    style=colors.MUTED,
+                )
+            )
+    manager = _response_manager(ctx)
+    reason = ctx.args.reason or "User-initiated clear RAM"
+    if not _confirm(ctx, "Clear RAM now?"):
+        cancelled = manager.record_cancelled(ActionType.TRIM_WORKING_SETS, reason=reason)
+        _print_action(ctx, cancelled)
+        return ExitCode.CANCELLED
+    action, result = manager.trim_memory(reason=reason)
+    if ctx.json:
+        write_json(envelope("clear_ram", action=action), sys.stdout)
+    elif result is not None and action.outcome is ActionOutcome.SUCCEEDED:
+        ctx.console.print(
+            Text(
+                f"Freed {format_bytes(result.freed_bytes)} · trimmed {result.trimmed} processes · "
+                f"{result.denied} not accessible · {result.duration_seconds:.1f}s",
+                style=colors.OK,
+            )
+        )
+    else:
+        _print_action(ctx, action)
+    return _ACTION_EXIT[action.outcome]
 
 
 def _confirm(ctx: AppContext, prompt: str) -> bool:
@@ -1808,6 +1860,20 @@ def build_parser() -> argparse.ArgumentParser:
                 help="override the protected-process safety check (dangerous)",
             )
         p.set_defaults(handler=cmd_process_action, action_verb=verb)
+
+    p = sub.add_parser(
+        "clear-ram",
+        parents=[common],
+        help="trim process working sets to free physical RAM",
+        description=(
+            "Empty the working set of every process you can access (like RAMMap's 'Empty Working "
+            "Sets'). Nothing is closed or deleted; programs page memory back in when they need "
+            "it. Standard users can trim only their own processes. Asks for confirmation."
+        ),
+    )
+    p.add_argument("--yes", "-y", action="store_true", help="skip the confirmation prompt")
+    p.add_argument("--reason", help="reason recorded in the audit log")
+    p.set_defaults(handler=cmd_clear_ram)
 
     p = sub.add_parser(
         "firewall",
