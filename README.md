@@ -12,6 +12,8 @@ It sends no telemetry, never hides itself, and never takes automatic action.
 
 **All 14 phases are complete.** ThreatLens ships as a CLI and as a single-file
 `ThreatLens.exe`; running the executable with no arguments opens the live btop-style dashboard.
+The `threatlens` command is available in both **PowerShell** and **Command Prompt (cmd)** — see
+[Option C](#option-c--threatlens-in-every-shell-powershell-and-cmd).
 
 | Area | What works |
 |------|-----------|
@@ -70,6 +72,35 @@ If activation is blocked by the execution policy, run
 `.venv\Scripts\threatlens.exe` directly. (The pip console command is `threatlens`; the packaged
 executable is `ThreatLens.exe` — same program.)
 
+### Option C — `threatlens` in every shell (PowerShell and cmd)
+
+To run `threatlens` from any PowerShell or Command Prompt window, without activating a virtual
+environment first, install it into your regular Python. Run this from the repository folder in a
+window where no virtual environment is active:
+
+```powershell
+py -m pip install -e .
+```
+
+pip places `threatlens.exe` in Python's `Scripts` folder (for example
+`%LOCALAPPDATA%\Programs\Python\Python313\Scripts`), which is on `PATH` when Python was installed
+with *Add python.exe to PATH*. Open a **new** terminal and the command works in either shell:
+
+```powershell
+# PowerShell
+PS C:\Users\you> threatlens monitor
+```
+
+```bat
+:: Command Prompt
+C:\Users\you> threatlens monitor
+```
+
+Because the install is editable (`-e`), changes to the source take effect without reinstalling.
+If the command is not found, add the folder printed by
+`py -c "import sysconfig; print(sysconfig.get_path('scripts'))"` to your user `PATH`.
+To remove it: `py -m pip uninstall threatlens`.
+
 ## Usage
 
 ```powershell
@@ -118,6 +149,10 @@ threatlens config init | show | path | validate
 ```
 
 All commands accept `--json`. The full command set is in `threatlens --help`.
+
+Every command works the same in PowerShell and Command Prompt. The examples above use PowerShell
+syntax only for redirection: in cmd, replace `| Out-File -Encoding ascii events.jsonl` with
+`> events.jsonl` (the JSON output is already ASCII).
 
 Global flags work before or after the command: `--json`, `-q/--quiet`, `-v/--verbose`,
 `--no-color`, `--config PATH`, `--version`, `-h/--help`.
