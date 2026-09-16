@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from winsentinel.config import (
+from threatlens.config import (
     DEFAULT_CONFIG_TOML,
     MAX_CONFIG_BYTES,
     Config,
@@ -12,7 +12,7 @@ from winsentinel.config import (
     parse_config,
     write_default_config,
 )
-from winsentinel.errors import ConfigError
+from threatlens.errors import ConfigError
 
 SRC = Path("config.toml")
 
@@ -69,18 +69,18 @@ def test_unresolved_environment_variable_is_rejected() -> None:
 
 
 def test_env_log_level_override(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("WINSENTINEL_LOG_LEVEL", "debug")
+    monkeypatch.setenv("THREATLENS_LOG_LEVEL", "debug")
     assert parse_config("", SRC).general.log_level == "DEBUG"
 
 
 def test_missing_default_file_uses_defaults(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.delenv("WINSENTINEL_CONFIG", raising=False)
+    monkeypatch.delenv("THREATLENS_CONFIG", raising=False)
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
     config, path, loaded = load_config(None)
     assert config == Config() and loaded is False
-    assert path == tmp_path / "WinSentinel" / "config.toml"
+    assert path == tmp_path / "ThreatLens" / "config.toml"
 
 
 def test_missing_explicit_file_is_an_error(tmp_path: Path) -> None:

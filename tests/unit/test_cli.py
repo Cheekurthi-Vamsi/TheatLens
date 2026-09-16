@@ -14,10 +14,10 @@ from fixtures.fakes import (
     entry,
     socket_entry,
 )
-from winsentinel import cli
-from winsentinel.collectors.network_collector import NetworkCollector
-from winsentinel.collectors.process_collector import ProcessCollector, ProcessCollectorOptions
-from winsentinel.errors import ExitCode
+from threatlens import cli
+from threatlens.collectors.network_collector import NetworkCollector
+from threatlens.collectors.process_collector import ProcessCollector, ProcessCollectorOptions
+from threatlens.errors import ExitCode
 
 
 @pytest.fixture
@@ -57,13 +57,13 @@ def fake_system(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(cli, "ProcessCollector", factory)
     monkeypatch.setattr(cli, "NetworkCollector", lambda *_, **__: NetworkCollector(sockets))
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
-    monkeypatch.delenv("WINSENTINEL_CONFIG", raising=False)
+    monkeypatch.delenv("THREATLENS_CONFIG", raising=False)
 
 
 def cli_actions() -> list[dict]:  # type: ignore[type-arg]
     """Audit rows from the database the CLI wrote (under the patched LOCALAPPDATA)."""
-    from winsentinel.config import Config
-    from winsentinel.storage.database import Database
+    from threatlens.config import Config
+    from threatlens.storage.database import Database
 
     with Database(Config().general.resolved_database_path(), read_only=True) as db:
         return [dict(r) for r in db.query("SELECT * FROM actions")]
@@ -78,7 +78,7 @@ def run_json(capsys: pytest.CaptureFixture[str], *argv: str) -> dict:  # type: i
 class TestCommands:
     def test_processes_json_flag_after_subcommand(self, capsys: pytest.CaptureFixture[str]) -> None:
         doc = run_json(capsys, "processes", "--json", "--sample", "0", "--sort", "pid")
-        assert doc["schema"] == "winsentinel.processes"
+        assert doc["schema"] == "threatlens.processes"
         assert doc["schema_version"] == 1
         assert [p["pid"] for p in doc["processes"]] == [4, 1000, 2000]
 
@@ -113,7 +113,7 @@ class TestCommands:
         self, capsys: pytest.CaptureFixture[str]
     ) -> None:
         doc = run_json(capsys, "network", "--json")
-        assert doc["schema"] == "winsentinel.network" and doc["total"] == 3
+        assert doc["schema"] == "threatlens.network" and doc["total"] == 3
         external = run_json(capsys, "network", "--json", "--external")["connections"]
         assert [(c["process"], c["remote_port"], c["remote_scope"]) for c in external] == [
             ("tool.exe", 4444, "PUBLIC")
@@ -132,7 +132,7 @@ class TestCommands:
         self, capsys: pytest.CaptureFixture[str]
     ) -> None:
         doc = run_json(capsys, "inspect", "2000", "--json", "--sample", "0")
-        assert doc["schema"] == "winsentinel.inspect"
+        assert doc["schema"] == "threatlens.inspect"
         assert [c["remote_port"] for c in doc["connections"]] == [4444]
         assert [a["name"] for a in doc["ancestry"]] == ["explorer.exe", "System"]
 
@@ -163,9 +163,9 @@ class TestCommands:
         info = run_json(capsys, "db", "info", "--json")
         assert info["counts"]["security_events"] > 0 and info["counts"]["processes"] >= 3
         events = run_json(capsys, "events", "--json", "--type", "PROCESS_DISCOVERED")
-        assert events["schema"] == "winsentinel.events" and events["count"] > 0
+        assert events["schema"] == "threatlens.events" and events["count"] > 0
         alerts = run_json(capsys, "alerts", "--json")
-        assert alerts["schema"] == "winsentinel.alerts"
+        assert alerts["schema"] == "threatlens.alerts"
 
     def test_read_commands_without_database(self, capsys: pytest.CaptureFixture[str]) -> None:
         assert cli.main(["events", "--json"]) == ExitCode.ERROR  # no DB yet
@@ -174,7 +174,7 @@ class TestCommands:
     def test_clear_ram_confirmed_and_audited(
         self, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from winsentinel.response.memory import MemoryTrimmer
+        from threatlens.response.memory import MemoryTrimmer
 
         trimmed: list[int] = []
         readings = iter([9_000, 4_000])
@@ -183,7 +183,7 @@ class TestCommands:
         )
         monkeypatch.setattr(cli, "MemoryTrimmer", lambda: fake)
         doc = run_json(capsys, "clear-ram", "--yes", "--json")
-        assert doc["schema"] == "winsentinel.clear_ram"
+        assert doc["schema"] == "threatlens.clear_ram"
         assert doc["action"]["outcome"] == "SUCCEEDED"
         assert doc["action"]["details"]["freed_bytes"] == 5_000
         assert trimmed == [1000, 2000]
@@ -196,7 +196,7 @@ class TestCommands:
         def must_not_run() -> None:
             raise AssertionError("trimmer must not be used when cancelled")
 
-        from winsentinel.response.memory import MemoryTrimmer
+        from threatlens.response.memory import MemoryTrimmer
 
         monkeypatch.setattr(
             cli, "MemoryTrimmer", lambda: MemoryTrimmer(trim=lambda _: must_not_run())
@@ -205,7 +205,7 @@ class TestCommands:
 
     def test_status_reports_engine_not_running(self, capsys: pytest.CaptureFixture[str]) -> None:
         doc = run_json(capsys, "status", "--json", "--no-self-test")
-        assert doc["schema"] == "winsentinel.status"
+        assert doc["schema"] == "threatlens.status"
         assert doc["engine_running"] is False and doc["self_test"] == []
 
     def test_monitor_rejects_unknown_event_category(
@@ -282,4 +282,4 @@ def test_invalid_arguments_exit_with_usage(argv: list[str]) -> None:
 
 def test_no_command_prints_help(capsys: pytest.CaptureFixture[str]) -> None:
     assert cli.main([]) == ExitCode.USAGE
-    assert "usage: winsentinel" in capsys.readouterr().out
+    assert "usage: threatlens" in capsys.readouterr().out

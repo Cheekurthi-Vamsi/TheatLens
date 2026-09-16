@@ -1,11 +1,11 @@
 # Detection Rules
 
-> Generated from the rule metadata in `src/winsentinel/detection/rules/` by
+> Generated from the rule metadata in `src/threatlens/detection/rules/` by
 > `scripts/generate_rule_docs.py`. Do not edit by hand.
 
 ## How to read a detection
 
-WinSentinel rules produce **signals, not verdicts**. Each detection carries:
+ThreatLens rules produce **signals, not verdicts**. Each detection carries:
 
 | Field | Meaning |
 |-------|---------|
@@ -36,9 +36,9 @@ Network rules that need the owner's signature **defer** a connection observed be
 enrichment finishes and evaluate it when `PROCESS_ENRICHED` arrives, so a validly signed
 application is never flagged merely because its first connection beat the signature check.
 
-`winsentinel inspect <PID>` replays the *current state* of one process through the rules.
+`threatlens inspect <PID>` replays the *current state* of one process through the rules.
 Rules that watch change over time (NET-001, NET-002, NET-003) only fire under
-`winsentinel monitor`.
+`threatlens monitor`.
 
 ## Rule summary
 
@@ -153,7 +153,7 @@ Rules that watch change over time (NET-001, NET-002, NET-003) only fire under
 
 **Detects:** A new registry Run key or Startup-folder entry appeared after monitoring began.
 
-**Why it matters:** Establishing autostart is how malware survives a reboot. A Run key or Startup entry that appears while WinSentinel is watching is worth confirming; the risk is higher when the program it points at lives in a user-writable or temporary location.
+**Why it matters:** Establishing autostart is how malware survives a reboot. A Run key or Startup entry that appears while ThreatLens is watching is worth confirming; the risk is higher when the program it points at lives in a user-writable or temporary location.
 
 | Category | Score | Confidence | Alone | Evaluated on | MITRE ATT&CK |
 |----------|------:|------------|-------|--------------|--------------|
@@ -164,7 +164,7 @@ Rules that watch change over time (NET-001, NET-002, NET-003) only fire under
 * Installing or updating legitimate software that adds a startup entry
 * The user pinning an application to run at login
 
-**What to do:** Confirm you installed or expected this program. Remove the entry (regedit or the Startup folder) if it is unwanted; WinSentinel only reports, never modifies it.
+**What to do:** Confirm you installed or expected this program. Remove the entry (regedit or the Startup folder) if it is unwanted; ThreatLens only reports, never modifies it.
 
 ### PERSIST-002 — New scheduled task or auto-start service
 
@@ -350,7 +350,7 @@ Rules that watch change over time (NET-001, NET-002, NET-003) only fire under
 * Document automation that shells out to helper programs
 * Browser-launched installers that use PowerShell (rare)
 
-**What to do:** Reconstruct the chain with 'winsentinel tree' and inspect the final process first; it is the most likely payload.
+**What to do:** Reconstruct the chain with 'threatlens tree' and inspect the final process first; it is the most likely payload.
 
 ## Tuning
 

@@ -3,9 +3,9 @@ from __future__ import annotations
 import threading
 import time
 
-from winsentinel.core.models import ComponentHealth, ComponentStatus
-from winsentinel.core.scheduler import PeriodicTask, Scheduler, TaskRunner
-from winsentinel.errors import CollectorUnavailableError
+from threatlens.core.models import ComponentHealth, ComponentStatus
+from threatlens.core.scheduler import PeriodicTask, Scheduler, TaskRunner
+from threatlens.errors import CollectorUnavailableError
 
 
 class Monotonic:

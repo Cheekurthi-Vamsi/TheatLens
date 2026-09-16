@@ -20,7 +20,7 @@ from fixtures.detection import (
     socket_event,
 )
 from fixtures.fakes import minutes
-from winsentinel.core.models import (
+from threatlens.core.models import (
     Confidence,
     ConnectionState,
     Direction,
@@ -30,8 +30,8 @@ from winsentinel.core.models import (
     SignatureStatus,
     TransportProtocol,
 )
-from winsentinel.detection.rules import RULE_CLASSES, build_rules, rule_catalog
-from winsentinel.detection.rules.execution import (
+from threatlens.detection.rules import RULE_CLASSES, build_rules, rule_catalog
+from threatlens.detection.rules.execution import (
     LolbinProxyExecution,
     SuspiciousParentChild,
     SuspiciousPowerShell,
@@ -39,21 +39,21 @@ from winsentinel.detection.rules.execution import (
     decode_encoded_command,
     parse_powershell,
 )
-from winsentinel.detection.rules.network import (
+from threatlens.detection.rules.network import (
     FirstSeenExecutableOutbound,
     HighFrequencyOutbound,
     NewListeningPort,
     NewProcessExternalConnection,
     UncommonRemotePort,
 )
-from winsentinel.detection.rules.origin import (
+from threatlens.detection.rules.origin import (
     DeceptiveFileName,
     InvalidSignature,
     SystemBinaryMasquerading,
     TempDirectoryExecution,
     UnsignedUserWritableExecutable,
 )
-from winsentinel.security.signatures import CERT_E_EXPIRED, CERT_E_UNTRUSTEDROOT, TRUST_E_BAD_DIGEST
+from threatlens.security.signatures import CERT_E_EXPIRED, CERT_E_UNTRUSTEDROOT, TRUST_E_BAD_DIGEST
 
 PROGRAM_FILES_APP = r"C:\Program Files\Contoso\app.exe"
 

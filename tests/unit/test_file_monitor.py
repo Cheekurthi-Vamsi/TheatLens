@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from fixtures.detection import host, settings
-from winsentinel.core.models import EventType, SecurityEvent
-from winsentinel.detection.rules.file import ExecutableDroppedInSensitiveLocation
-from winsentinel.monitors.file_monitor import FileMonitor, is_executable_or_script
+from threatlens.core.models import EventType, SecurityEvent
+from threatlens.detection.rules.file import ExecutableDroppedInSensitiveLocation
+from threatlens.monitors.file_monitor import FileMonitor, is_executable_or_script
 
 
 class Clock:
@@ -55,7 +55,7 @@ def test_is_executable_or_script() -> None:
 
 
 def file_event(path: str, event_type: EventType = EventType.FILE_CREATED) -> SecurityEvent:
-    from winsentinel.monitors.file_monitor import _extension, is_executable_or_script
+    from threatlens.monitors.file_monitor import _extension, is_executable_or_script
 
     return SecurityEvent(
         event_type=event_type,

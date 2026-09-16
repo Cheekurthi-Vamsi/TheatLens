@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from fixtures.fakes import minutes, process
-from winsentinel.core.models import ProcessNode
-from winsentinel.correlation.process_tree import (
+from threatlens.core.models import ProcessNode
+from threatlens.correlation.process_tree import (
     ancestry,
     build_process_tree,
     children_of,

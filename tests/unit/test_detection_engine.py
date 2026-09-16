@@ -14,9 +14,9 @@ from fixtures.detection import (
     socket_event,
 )
 from fixtures.fakes import minutes
-from winsentinel.config import Config
-from winsentinel.core.interfaces import StateView
-from winsentinel.core.models import (
+from threatlens.config import Config
+from threatlens.core.interfaces import StateView
+from threatlens.core.models import (
     Confidence,
     DetectionResult,
     EventType,
@@ -24,12 +24,12 @@ from winsentinel.core.models import (
     RuleMetadata,
     SecurityEvent,
 )
-from winsentinel.detection.engine import DetectionEngine, own_process_keys
-from winsentinel.detection.paths import PathClassifier
-from winsentinel.detection.rules import build_rules
-from winsentinel.detection.rules.base import Rule
-from winsentinel.detection.scan import scan_process
-from winsentinel.detection.settings import DetectionSettings
+from threatlens.detection.engine import DetectionEngine, own_process_keys
+from threatlens.detection.paths import PathClassifier
+from threatlens.detection.rules import build_rules
+from threatlens.detection.rules.base import Rule
+from threatlens.detection.scan import scan_process
+from threatlens.detection.settings import DetectionSettings
 
 TEMP_EXE = r"C:\Users\alice\AppData\Local\Temp\x.exe"
 
@@ -86,7 +86,7 @@ def test_failing_rule_is_isolated_then_auto_disabled() -> None:
 def test_disabled_rules_ignored_executables_and_self_exclusion() -> None:
     temp = proc(20, "x.exe", TEMP_EXE)
     ignored = proc(21, "y.exe", r"C:\Users\alice\AppData\Local\Temp\y.exe")
-    myself = proc(22, "winsentinel.exe", r"C:\Users\alice\AppData\Local\Temp\winsentinel.exe")
+    myself = proc(22, "threatlens.exe", r"C:\Users\alice\AppData\Local\Temp\threatlens.exe")
     state = host([temp, ignored, myself])
 
     disabled = DetectionEngine(build_rules(settings()), state, disabled_rules={"PROC-001"})
@@ -102,8 +102,8 @@ def test_disabled_rules_ignored_executables_and_self_exclusion() -> None:
     assert engine.stats().ignored == 1
     copy = proc(
         23,
-        "winsentinel.exe",
-        r"C:\Users\alice\AppData\Local\Temp\winsentinel.exe",
+        "threatlens.exe",
+        r"C:\Users\alice\AppData\Local\Temp\threatlens.exe",
         created=minutes(9.5),
     )
     assert DetectionEngine(build_rules(settings()), host([copy])).handle(
@@ -118,7 +118,7 @@ def test_duplicate_rule_ids_rejected() -> None:
 
 def test_own_process_keys_stop_at_first_non_launcher() -> None:
     shell = proc(10, "powershell.exe", ppid=4, created=minutes(1))
-    stub = proc(11, "winsentinel.exe", ppid=10, created=minutes(2))
+    stub = proc(11, "threatlens.exe", ppid=10, created=minutes(2))
     redirector = proc(12, "python.exe", ppid=11, created=minutes(3))
     interpreter = proc(13, "python.exe", ppid=12, created=minutes(4))
     keys = own_process_keys([shell, stub, redirector, interpreter], 13)
@@ -181,7 +181,7 @@ def test_enriched_event_without_state_is_harmless() -> None:
 
 
 def test_allowlist_suppresses_matching_process() -> None:
-    from winsentinel.detection.allowlist import AllowlistEntry, AllowlistMatcher, AllowlistMatchType
+    from threatlens.detection.allowlist import AllowlistEntry, AllowlistMatcher, AllowlistMatchType
 
     temp = proc(20, "x.exe", TEMP_EXE)
     state = host([temp])

@@ -3,13 +3,13 @@ requires = ["setuptools>=77", "wheel"]  # >=77 for the PEP 639 `license = "MIT"`
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "winsentinel"
+name = "threatlens"
 version = "0.1.0"
 description = "Windows host security, activity monitoring and response engine (defensive, local-first)."
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
-authors = [{ name = "WinSentinel contributors" }]
+authors = [{ name = "ThreatLens contributors" }]
 keywords = ["security", "windows", "edr", "monitoring", "blue-team"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -39,14 +39,13 @@ dev = [
 ]
 
 [project.scripts]
-winsentinel = "winsentinel.cli:main"
-threatlens = "winsentinel.cli:main"
+threatlens = "threatlens.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-winsentinel = ["py.typed"]
+threatlens = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -61,7 +60,7 @@ markers = [
 python_version = "3.12"
 strict = true
 mypy_path = "src"
-packages = ["winsentinel"]
+packages = ["threatlens"]
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]

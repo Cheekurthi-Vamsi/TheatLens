@@ -21,8 +21,8 @@ import pytest
 pytestmark = pytest.mark.integration
 
 if sys.platform == "win32":
-    from winsentinel.collectors.process_collector import ProcessCollector, ProcessEnricher
-    from winsentinel.core.models import (
+    from threatlens.collectors.process_collector import ProcessCollector, ProcessEnricher
+    from threatlens.core.models import (
         Architecture,
         EventType,
         IntegrityLevel,
@@ -30,19 +30,19 @@ if sys.platform == "win32":
         SignatureSource,
         SignatureStatus,
     )
-    from winsentinel.correlation.process_tree import build_process_tree, find_node
-    from winsentinel.monitors.process_monitor import ProcessMonitor
-    from winsentinel.security.privileges import detect_privileges
-    from winsentinel.security.redaction import REDACTED
-    from winsentinel.security.signatures import SignatureVerifier
-    from winsentinel.utils import ntapi, windows
+    from threatlens.correlation.process_tree import build_process_tree, find_node
+    from threatlens.monitors.process_monitor import ProcessMonitor
+    from threatlens.security.privileges import detect_privileges
+    from threatlens.security.redaction import REDACTED
+    from threatlens.security.signatures import SignatureVerifier
+    from threatlens.utils import ntapi, windows
 
 PYTHON = getattr(sys, "_base_executable", sys.executable)
 SPAWN_TIMEOUT_SECONDS = 10.0
 
 
 def spawn_sleeper(*extra_args: str) -> subprocess.Popen[bytes]:
-    marker = f"winsentinel-test-{uuid.uuid4().hex}"
+    marker = f"threatlens-test-{uuid.uuid4().hex}"
     return subprocess.Popen(
         [PYTHON, "-c", "import time, sys; time.sleep(60)", marker, *extra_args],
         stdout=subprocess.DEVNULL,

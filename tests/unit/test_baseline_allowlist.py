@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fixtures.detection import owned, proc
 from fixtures.fakes import minutes
-from winsentinel.core.models import (
+from threatlens.core.models import (
     Attribution,
     ConnectionState,
     CorrelatedConnection,
@@ -14,8 +14,8 @@ from winsentinel.core.models import (
     SignatureSource,
     SignatureStatus,
 )
-from winsentinel.detection.allowlist import AllowlistEntry, AllowlistMatcher, AllowlistMatchType
-from winsentinel.detection.baseline import (
+from threatlens.detection.allowlist import AllowlistEntry, AllowlistMatcher, AllowlistMatchType
+from threatlens.detection.baseline import (
     BaselineItemKind,
     capture_baseline,
     compare_baseline,

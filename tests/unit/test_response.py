@@ -2,22 +2,22 @@ from __future__ import annotations
 
 from fixtures.detection import proc
 from fixtures.fakes import minutes
-from winsentinel.core.models import ActionOutcome, ActionType, IntegrityLevel, ProcessInfo
-from winsentinel.response.firewall_control import (
+from threatlens.core.models import ActionOutcome, ActionType, IntegrityLevel, ProcessInfo
+from threatlens.response.firewall_control import (
     CommandResult,
     FirewallController,
     FirewallError,
     block_ip_spec,
     block_port_spec,
 )
-from winsentinel.response.process_control import (
+from threatlens.response.process_control import (
     ProcessActionFailedError,
     ProcessController,
     ProcessIdentityChangedError,
 )
-from winsentinel.response.protection import ProtectionPolicy
-from winsentinel.response.response_manager import ResponseManager
-from winsentinel.utils import windows
+from threatlens.response.protection import ProtectionPolicy
+from threatlens.response.response_manager import ResponseManager
+from threatlens.utils import windows
 
 
 class FakeCollector:
@@ -25,7 +25,7 @@ class FakeCollector:
         self._processes = processes
 
     def collect_pid(self, pid: int) -> ProcessInfo:
-        from winsentinel.errors import ProcessNotFoundError
+        from threatlens.errors import ProcessNotFoundError
 
         if pid not in self._processes:
             raise ProcessNotFoundError(pid)
@@ -95,7 +95,7 @@ class TestProtection:
         assert policy.evaluate(proc(500, "lsass.exe", created=minutes(1))).protected
         system = proc(600, "svc.exe", created=minutes(1), integrity_level=IntegrityLevel.SYSTEM)
         assert policy.evaluate(system).protected
-        assert policy.evaluate(proc(1, "winsentinel.exe", created=minutes(1))).protected  # own pid
+        assert policy.evaluate(proc(1, "threatlens.exe", created=minutes(1))).protected  # own pid
 
     def test_ordinary_process_is_not_protected(self) -> None:
         policy = ProtectionPolicy(frozenset(), own_pid=1)
@@ -168,7 +168,7 @@ class FakeBackend:
 class TestFirewall:
     def test_block_ip_builds_outbound_rule(self) -> None:
         spec = block_ip_spec("93.184.216.34")
-        assert spec.rule_name == "WinSentinel:ip:93.184.216.34"
+        assert spec.rule_name == "ThreatLens:ip:93.184.216.34"
         assert "action=block" in spec.netsh_args and "remoteip=93.184.216.34" in spec.netsh_args
         assert "dir=out" in spec.netsh_args
 
@@ -176,7 +176,7 @@ class TestFirewall:
         backend = FakeBackend(CommandResult(0, "Ok.\n", ""), CommandResult(0, "Ok.\n", ""))
         controller = FirewallController(backend)
         controller.add(block_port_spec(4444, "tcp"))
-        controller.remove("WinSentinel:port:TCP-4444")
+        controller.remove("ThreatLens:port:TCP-4444")
         assert backend.commands[0][:4] == ["advfirewall", "firewall", "add", "rule"]
         assert backend.commands[1][:4] == ["advfirewall", "firewall", "delete", "rule"]
 

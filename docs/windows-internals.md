@@ -1,6 +1,6 @@
 # Windows Internals Notes
 
-This document explains the Windows mechanisms WinSentinel relies on. Each section answers the
+This document explains the Windows mechanisms ThreatLens relies on. Each section answers the
 project's engineering questions: *which API, why, what permissions, what limitations, what
 happens on failure, and what alternatives exist.* Sections are added as phases land.
 
@@ -77,7 +77,7 @@ identity** and cached.
   UI shows `<access denied>` rather than a blank or a guess.
 
 **Command line caveat.** Windows passes a process a *single string*, stored in its PEB. The
-process can overwrite it after start (an anti-forensics trick). WinSentinel reads it at first
+process can overwrite it after start (an anti-forensics trick). ThreatLens reads it at first
 sighting — as early as polling permits.
 
 **Integrity levels.** RIDs: `0x0000` untrusted, `0x1000` low (browser sandboxes), `0x2000` medium
@@ -97,7 +97,7 @@ Compression*, *vmmem*, *Secure System*, Idle, System).
 
 ### 4. PIDs, reuse and parent verification
 
-Windows recycles PIDs quickly. WinSentinel therefore identifies a process by
+Windows recycles PIDs quickly. ThreatLens therefore identifies a process by
 **`process_key = "<pid>:<creation-time-ms>"`**.
 
 The parent PID is only a creation-time record. If the parent exits, its PID may be reassigned to
@@ -156,11 +156,11 @@ handle after hashing, and a hash of a file that changed mid-read is not cached.
 
 ## Privileges (Phase 1)
 
-**API:** `GetTokenInformation(TokenElevation)` on WinSentinel's own token.
+**API:** `GetTokenInformation(TokenElevation)` on ThreatLens's own token.
 
 Under UAC an administrator normally runs with a *filtered* token; only "Run as administrator"
 yields an elevated one. `TokenElevation` reports the effective state, unlike the deprecated
-`IsUserAnAdmin`. WinSentinel never requests elevation itself.
+`IsUserAnAdmin`. ThreatLens never requests elevation itself.
 
 Implementation gotcha: the size-probing call to `GetTokenInformation` fails with
 `ERROR_INSUFFICIENT_BUFFER` for variable-size classes but `ERROR_BAD_LENGTH` for fixed-size ones
@@ -186,7 +186,7 @@ such as `TokenElevation`.
 | `dwState` | `MIB_TCP_STATE`: 1 CLOSED … 5 ESTABLISHED … 12 DELETE_TCB. UDP has no state |
 
 Row sizes on x64: TCPv4 160, TCPv6 192, UDPv4 160, UDPv6 176 bytes. The table header is a
-`DWORD` count followed by rows at the row's alignment (8 bytes on x64), which WinSentinel lets
+`DWORD` count followed by rows at the row's alignment (8 bytes on x64), which ThreatLens lets
 ctypes compute instead of hard-coding.
 
 * **Why `OWNER_MODULE` and not `OWNER_PID` (psutil's choice):** the creation timestamp makes "the
@@ -206,7 +206,7 @@ ctypes compute instead of hard-coding.
 
 ### 2. Direction is inferred
 
-The tables do not record who initiated a TCP connection. WinSentinel marks a connected socket
+The tables do not record who initiated a TCP connection. ThreatLens marks a connected socket
 **inbound** when its local port is listened on at the same (or wildcard `0.0.0.0` / `::`) address,
 otherwise **outbound**. TCP `LISTEN` rows are *listening*; UDP rows are *bound*.
 
@@ -216,7 +216,7 @@ otherwise **outbound**. TCP `LISTEN` rows are *listening*; UDP rows are *bound*.
 (100.64.0.0/10) and IPv6 unique-local (fc00::/7); `PUBLIC` = globally routable; everything else
 (documentation, benchmarking, broadcast ranges) is `RESERVED`. IPv4-mapped IPv6 addresses are
 classified by their IPv4 part. Note that Python's `ipaddress.is_private` also covers
-documentation ranges, which is why WinSentinel uses its own list.
+documentation ranges, which is why ThreatLens uses its own list.
 
 ### 4. Correlation: PID + time, not PID alone
 
@@ -239,16 +239,16 @@ executables yields to foreground applications. No privileges required; failure i
 
 ### Single instance
 
-**API:** `msvcrt.locking` → `LockFile` on `%LOCALAPPDATA%\WinSentinel\engine.lock`. The byte-range
+**API:** `msvcrt.locking` → `LockFile` on `%LOCALAPPDATA%\ThreatLens\engine.lock`. The byte-range
 lock is released by Windows when the process exits, even on a crash, so there are no stale lock
-files to clean up. A second `winsentinel monitor` for the same user fails immediately with a clear
+files to clean up. A second `threatlens monitor` for the same user fails immediately with a clear
 message.
 
 ### Status file
 
 `engine-status.json` is written to a temporary file in the same directory and renamed over the
 target (`MoveFileExW` with replace semantics via `Path.replace`), so readers never see a partial
-file. `winsentinel status` validates it against the schema, and only reports the engine as running
+file. `threatlens status` validates it against the schema, and only reports the engine as running
 if the status is fresh **and** the recorded PID still belongs to the same process instance
 (`process_key`), so a file left behind by a crashed engine is never shown as running.
 
@@ -266,7 +266,7 @@ keeps working. Worker threads are daemon threads so a hung system call cannot pr
 SQLite in **WAL** journal mode: readers (`events`, `alerts`, `db info` from another terminal) never
 block the engine's writer. A single writer thread batches inserts and flushes on shutdown, so
 Ctrl+C does not lose buffered events. Read commands open the file read-only (`mode=ro` URI). No
-special permissions: the database lives under `%LOCALAPPDATA%\WinSentinel`.
+special permissions: the database lives under `%LOCALAPPDATA%\ThreatLens`.
 
 ---
 
@@ -311,7 +311,7 @@ irreversible: no cleanup handlers run, unsaved data is lost. Same permission rul
 * **Why this and not purging the standby list:** purging standby
   (`NtSetSystemInformation(SystemMemoryListInformation)`) throws away the file cache, which is
   already counted as available and makes the system *slower*. It also needs Administrator plus
-  `SeProfileSingleProcessPrivilege`. WinSentinel does not do it.
+  `SeProfileSingleProcessPrivilege`. ThreatLens does not do it.
 * **Permissions:** standard users trim their own processes; others need Administrator; protected
   processes refuse everyone. Denials are counted and reported, not retried.
 * **Cost:** one handle per process; a full pass over ~300 processes takes a fraction of a second
@@ -335,7 +335,7 @@ creation time *through the opened handle* (`GetProcessTimes`); this is a known, 
   `list` matches the `Rule Name:` label, which is English-only. On non-English Windows, `list` may
   show nothing, but block/unblock still work.
 * **Permissions:** Administrator. Without elevation netsh fails and the error says so.
-* **Scope:** outbound block rules by remote IP, remote port, or program path. WinSentinel never
+* **Scope:** outbound block rules by remote IP, remote port, or program path. ThreatLens never
   edits or deletes rules it did not create.
 
 ---

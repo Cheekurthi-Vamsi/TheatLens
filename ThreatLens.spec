@@ -11,8 +11,8 @@ from PyInstaller.utils.hooks import collect_submodules
 # watchdog selects its platform observer dynamically, so its submodules must be collected.
 hidden_imports = [
     *collect_submodules("watchdog"),
-    "winsentinel",
-    "winsentinel.cli",
+    "threatlens",
+    "threatlens.cli",
 ]
 
 a = Analysis(
@@ -49,4 +49,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    # Multi-size .ico (16–256 px) shown by Explorer, the taskbar and the console window.
+    icon="packaging/threatlens.ico",
 )

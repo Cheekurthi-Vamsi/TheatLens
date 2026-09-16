@@ -3,14 +3,14 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from fixtures.detection import host, settings
-from winsentinel.core.models import EventType, SecurityEvent
-from winsentinel.core.models.persistence import (
+from threatlens.core.models import EventType, SecurityEvent
+from threatlens.core.models.persistence import (
     PersistenceItem,
     PersistenceKind,
     PersistenceSnapshot,
 )
-from winsentinel.detection.rules.persistence import NewAutorunEntry, NewScheduledTaskOrService
-from winsentinel.monitors.persistence_monitor import diff_persistence
+from threatlens.detection.rules.persistence import NewAutorunEntry, NewScheduledTaskOrService
+from threatlens.monitors.persistence_monitor import diff_persistence
 
 NOW = datetime(2026, 9, 15, 12, 0, tzinfo=UTC)
 

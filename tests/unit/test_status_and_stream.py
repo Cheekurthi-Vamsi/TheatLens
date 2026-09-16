@@ -9,7 +9,7 @@ import pytest
 from rich.console import Console
 
 from fixtures.fakes import BASE_TIME, minutes
-from winsentinel.core.models import (
+from threatlens.core.models import (
     BusStats,
     EngineState,
     EngineStats,
@@ -17,13 +17,13 @@ from winsentinel.core.models import (
     EventType,
     SecurityEvent,
 )
-from winsentinel.core.status_file import (
+from threatlens.core.status_file import (
     EngineAlreadyRunningError,
     InstanceLock,
     StatusFile,
     is_status_current,
 )
-from winsentinel.ui.event_stream import EventStreamPrinter, format_event
+from threatlens.ui.event_stream import EventStreamPrinter, format_event
 
 
 def status(state: EngineState = EngineState.RUNNING, updated: float = 5) -> EngineStatus:

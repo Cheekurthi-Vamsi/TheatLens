@@ -13,22 +13,22 @@ from fixtures.fakes import (
     entry,
     socket_entry,
 )
-from winsentinel.collectors.network_collector import NetworkCollector
-from winsentinel.collectors.process_collector import ProcessCollector
-from winsentinel.config import Config
-from winsentinel.core.engine import Engine
-from winsentinel.core.models import ActionOutcome, ActionType, ProcessInfo, ResponseAction
-from winsentinel.detection.alerting import AlertManager
-from winsentinel.detection.engine import DetectionEngine
-from winsentinel.detection.rules import build_rules
-from winsentinel.detection.settings import DetectionSettings
-from winsentinel.errors import ProcessNotFoundError
-from winsentinel.response.memory import MemoryTrimmer
-from winsentinel.response.process_control import ProcessController
-from winsentinel.response.protection import ProtectionPolicy
-from winsentinel.response.response_manager import ResponseManager
-from winsentinel.ui.dashboard import Dashboard, ModalKind
-from winsentinel.ui.keyreader import KeyReader
+from threatlens.collectors.network_collector import NetworkCollector
+from threatlens.collectors.process_collector import ProcessCollector
+from threatlens.config import Config
+from threatlens.core.engine import Engine
+from threatlens.core.models import ActionOutcome, ActionType, ProcessInfo, ResponseAction
+from threatlens.detection.alerting import AlertManager
+from threatlens.detection.engine import DetectionEngine
+from threatlens.detection.rules import build_rules
+from threatlens.detection.settings import DetectionSettings
+from threatlens.errors import ProcessNotFoundError
+from threatlens.response.memory import MemoryTrimmer
+from threatlens.response.process_control import ProcessController
+from threatlens.response.protection import ProtectionPolicy
+from threatlens.response.response_manager import ResponseManager
+from threatlens.ui.dashboard import Dashboard, ModalKind
+from threatlens.ui.keyreader import KeyReader
 
 
 class StateCollector:

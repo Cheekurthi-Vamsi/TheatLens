@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from winsentinel.core.models import (
+from threatlens.core.models import (
     AddressFamily,
     ConnectionState,
     Direction,
@@ -20,9 +20,9 @@ from winsentinel.core.models import (
     SignatureStatus,
     TransportProtocol,
 )
-from winsentinel.utils import windows
-from winsentinel.utils.iphlpapi import RawSocketEntry
-from winsentinel.utils.ntapi import FILETIME_EPOCH_OFFSET, HUNDRED_NS_PER_SECOND, SystemProcessEntry
+from threatlens.utils import windows
+from threatlens.utils.iphlpapi import RawSocketEntry
+from threatlens.utils.ntapi import FILETIME_EPOCH_OFFSET, HUNDRED_NS_PER_SECOND, SystemProcessEntry
 
 BASE_TIME = datetime(2026, 9, 15, 11, 0, 0, tzinfo=UTC)
 
@@ -291,7 +291,7 @@ def connection(
     created: datetime | None = None,
     owner_module: str | None = None,
 ) -> NetworkConnection:
-    from winsentinel.utils.networking import classify_address
+    from threatlens.utils.networking import classify_address
 
     return NetworkConnection(
         protocol=protocol,

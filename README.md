@@ -1,8 +1,8 @@
-# Theat Lens
+# ThreatLens
 
 > **See what your Windows system is doing. Detect what shouldn't be happening. Respond safely.**
 
-Theat Lens is a transparent, local-first, defensive host-security and activity-monitoring CLI for
+ThreatLens is a transparent, local-first, defensive host-security and activity-monitoring CLI for
 Windows 10/11 — a lightweight, educational EDR. It shows *what* is happening, explains *why*
 something may be suspicious, and leaves every response decision to you.
 
@@ -10,7 +10,7 @@ It sends no telemetry, never hides itself, and never takes automatic action.
 
 ## Status
 
-**All 14 phases are complete.** WinSentinel ships as a CLI and as a single-file
+**All 14 phases are complete.** ThreatLens ships as a CLI and as a single-file
 `ThreatLens.exe`; running the executable with no arguments opens the live btop-style dashboard.
 
 | Area | What works |
@@ -62,62 +62,62 @@ btop-style dashboard.
 py -3.12 -m venv .venv
 .venv\Scripts\activate
 pip install -e .
-winsentinel --help
+threatlens --help
 ```
 
 If activation is blocked by the execution policy, run
 `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` first (current window only), or call
-`.venv\Scripts\winsentinel.exe` directly. (The pip console command is `winsentinel`; the packaged
+`.venv\Scripts\threatlens.exe` directly. (The pip console command is `threatlens`; the packaged
 executable is `ThreatLens.exe` — same program.)
 
 ## Usage
 
 ```powershell
 # Processes
-winsentinel processes --sort memory --limit 15
-winsentinel processes --name svchost --verify   # + SHA256 and Authenticode signature
-winsentinel process 4832                        # one process: image, signature, resources, lineage
-winsentinel tree --pid 8592 --depth 3
+threatlens processes --sort memory --limit 15
+threatlens processes --name svchost --verify   # + SHA256 and Authenticode signature
+threatlens process 4832                        # one process: image, signature, resources, lineage
+threatlens tree --pid 8592 --depth 3
 
 # Network
-winsentinel network --listening                 # every socket with owning process and service
-winsentinel network --external --json
-winsentinel connections --external --verify     # active connections grouped by process
+threatlens network --listening                 # every socket with owning process and service
+threatlens network --external --json
+threatlens connections --external --verify     # active connections grouped by process
 
 # Investigation
-winsentinel inspect 4832                        # process + sockets + communication chains + detections
+threatlens inspect 4832                        # process + sockets + communication chains + detections
 
 # Monitoring
-winsentinel monitor                             # live dashboard (q to quit)
-winsentinel monitor --stream                    # line-by-line stream of changes and detections
-winsentinel monitor --stream --events all --loopback   # include inventory, enrichment, loopback
-winsentinel monitor --json --duration 300 | Out-File -Encoding ascii events.jsonl
-winsentinel status                              # engine health (from another terminal) + self-test
+threatlens monitor                             # live dashboard (q to quit)
+threatlens monitor --stream                    # line-by-line stream of changes and detections
+threatlens monitor --stream --events all --loopback   # include inventory, enrichment, loopback
+threatlens monitor --json --duration 300 | Out-File -Encoding ascii events.jsonl
+threatlens status                              # engine health (from another terminal) + self-test
 
 # Response (confirmed + audited; firewall needs admin)
-winsentinel suspend 4832          # freeze a process while you investigate
-winsentinel resume 4832
-winsentinel terminate 4832        # irreversible; refuses protected system processes
-winsentinel clear-ram             # trim working sets to free physical RAM
-winsentinel firewall block-ip 185.1.2.3
-winsentinel firewall list | unblock "WinSentinel:ip:185.1.2.3"
+threatlens suspend 4832          # freeze a process while you investigate
+threatlens resume 4832
+threatlens terminate 4832        # irreversible; refuses protected system processes
+threatlens clear-ram             # trim working sets to free physical RAM
+threatlens firewall block-ip 185.1.2.3
+threatlens firewall list | unblock "ThreatLens:ip:185.1.2.3"
 
 # Baselines, allowlist, persistence, history
-winsentinel baseline create
-winsentinel baseline compare      # what's new since the baseline
-winsentinel allow sha256 <HASH> --reason "internal tool"
-winsentinel persistence           # autostart entries (Run keys, Startup, tasks, services)
-winsentinel events --type PROCESS_STARTED --since 2h
-winsentinel alerts | winsentinel alerts show <ID> | winsentinel alerts set-status <ID> resolved
-winsentinel db info | cleanup | vacuum
+threatlens baseline create
+threatlens baseline compare      # what's new since the baseline
+threatlens allow sha256 <HASH> --reason "internal tool"
+threatlens persistence           # autostart entries (Run keys, Startup, tasks, services)
+threatlens events --type PROCESS_STARTED --since 2h
+threatlens alerts | threatlens alerts show <ID> | threatlens alerts set-status <ID> resolved
+threatlens db info | cleanup | vacuum
 
 # Rules and configuration
-winsentinel rules
-winsentinel rules show PROC-006
-winsentinel config init | show | path | validate
+threatlens rules
+threatlens rules show PROC-006
+threatlens config init | show | path | validate
 ```
 
-All commands accept `--json`. The full command set is in `winsentinel --help`.
+All commands accept `--json`. The full command set is in `threatlens --help`.
 
 Global flags work before or after the command: `--json`, `-q/--quiet`, `-v/--verbose`,
 `--no-color`, `--config PATH`, `--version`, `-h/--help`.
@@ -197,7 +197,7 @@ file behaviour. Full specifications, false positives and tuning:
 
 ## Permissions
 
-WinSentinel never requests elevation. As a **standard user** you get every process's identity,
+ThreatLens never requests elevation. As a **standard user** you get every process's identity,
 lineage, CPU, memory and — for nearly all processes — executable path, hash and signature, plus all
 sockets with their owning process. Command line, user and integrity level are available for your
 own processes. **Running elevated** adds those for SYSTEM and other users' processes (and lets
@@ -234,7 +234,7 @@ Details: [`docs/windows-internals.md`](docs/windows-internals.md) · design:
 
 ## Security
 
-See [SECURITY.md](SECURITY.md): what WinSentinel will never do, how it protects itself (secret
+See [SECURITY.md](SECURITY.md): what ThreatLens will never do, how it protects itself (secret
 redaction, log/terminal-injection defences, strict config and status-file validation, PID-reuse
 safety), and known limitations.
 

@@ -11,7 +11,7 @@ from fixtures.fakes import (
     entry,
     invalid_parameter,
 )
-from winsentinel.collectors.process_collector import (
+from threatlens.collectors.process_collector import (
     ProcessCollector,
     ProcessCollectorOptions,
     architecture_from_machine,
@@ -19,10 +19,10 @@ from winsentinel.collectors.process_collector import (
     integrity_from_rid,
     validate_pid,
 )
-from winsentinel.core.models import Architecture, FieldIssue, IntegrityLevel
-from winsentinel.errors import CollectorUnavailableError, InvalidInputError, ProcessNotFoundError
-from winsentinel.security.redaction import REDACTED
-from winsentinel.utils import windows
+from threatlens.core.models import Architecture, FieldIssue, IntegrityLevel
+from threatlens.errors import CollectorUnavailableError, InvalidInputError, ProcessNotFoundError
+from threatlens.security.redaction import REDACTED
+from threatlens.utils import windows
 
 
 def make_collector(

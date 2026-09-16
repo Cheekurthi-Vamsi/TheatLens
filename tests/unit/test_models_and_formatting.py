@@ -4,9 +4,9 @@ import pytest
 from pydantic import ValidationError
 
 from fixtures.fakes import minutes, process
-from winsentinel.core.models import FieldIssue, ProcessInfo, make_process_key
-from winsentinel.ui.formatting import field_or_reason, format_bytes, truncate_middle
-from winsentinel.utils.windows import nt_to_win32_path
+from threatlens.core.models import FieldIssue, ProcessInfo, make_process_key
+from threatlens.ui.formatting import field_or_reason, format_bytes, truncate_middle
+from threatlens.utils.windows import nt_to_win32_path
 
 
 def test_process_key_distinguishes_pid_reuse() -> None:

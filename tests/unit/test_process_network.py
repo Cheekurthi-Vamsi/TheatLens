@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import timedelta
 
 from fixtures.fakes import connection, minutes, process
-from winsentinel.core.models import Attribution
-from winsentinel.correlation.process_network import (
+from threatlens.core.models import Attribution
+from threatlens.correlation.process_network import (
     attribute,
     connection_chain,
     correlate,

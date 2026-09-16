@@ -7,11 +7,11 @@ import struct
 import pytest
 
 from fixtures.fakes import FakeClock, FakeSocketSource, socket_entry
-from winsentinel.collectors.network_collector import NetworkCollector, infer_directions
-from winsentinel.core.models import AddressScope, ConnectionState, Direction, TransportProtocol
-from winsentinel.errors import CollectorUnavailableError, InvalidInputError
-from winsentinel.utils import iphlpapi
-from winsentinel.utils.networking import (
+from threatlens.collectors.network_collector import NetworkCollector, infer_directions
+from threatlens.core.models import AddressScope, ConnectionState, Direction, TransportProtocol
+from threatlens.errors import CollectorUnavailableError, InvalidInputError
+from threatlens.utils import iphlpapi
+from threatlens.utils.networking import (
     classify_address,
     format_endpoint,
     validate_ip,

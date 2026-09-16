@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from fixtures.fakes import BASE_TIME, connection, minutes, process
-from winsentinel.core.models import (
+from threatlens.core.models import (
     Attribution,
     ConnectionState,
     CorrelatedConnection,
@@ -22,10 +22,10 @@ from winsentinel.core.models import (
     SignatureStatus,
     TransportProtocol,
 )
-from winsentinel.core.state import SystemState
-from winsentinel.correlation.process_network import connection_record
-from winsentinel.detection.paths import PathClassifier, PathContext
-from winsentinel.detection.settings import DetectionSettings
+from threatlens.core.state import SystemState
+from threatlens.correlation.process_network import connection_record
+from threatlens.detection.paths import PathClassifier, PathContext
+from threatlens.detection.settings import DetectionSettings
 
 NOW = minutes(10)
 

@@ -23,14 +23,14 @@ import pytest
 pytestmark = pytest.mark.integration
 
 if sys.platform == "win32":
-    from winsentinel.collectors.network_collector import NetworkCollector
-    from winsentinel.collectors.process_collector import ProcessCollector, ProcessEnricher
-    from winsentinel.config import Config
-    from winsentinel.core.models import DetectionResult, ProcessInfo
-    from winsentinel.correlation.process_network import correlate, lookup_from_processes
-    from winsentinel.detection.scan import scan_process
-    from winsentinel.detection.settings import DetectionSettings
-    from winsentinel.utils.time import utc_now
+    from threatlens.collectors.network_collector import NetworkCollector
+    from threatlens.collectors.process_collector import ProcessCollector, ProcessEnricher
+    from threatlens.config import Config
+    from threatlens.core.models import DetectionResult, ProcessInfo
+    from threatlens.correlation.process_network import correlate, lookup_from_processes
+    from threatlens.detection.scan import scan_process
+    from threatlens.detection.settings import DetectionSettings
+    from threatlens.utils.time import utc_now
 
 PING = Path(os.environ.get("SYSTEMROOT", r"C:\Windows")) / "System32" / "PING.EXE"
 

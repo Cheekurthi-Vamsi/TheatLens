@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from fixtures.fakes import BASE_TIME, connection, minutes, process
-from winsentinel.core.models import (
+from threatlens.core.models import (
     Attribution,
     ConnectionState,
     CorrelatedConnection,
@@ -15,9 +15,9 @@ from winsentinel.core.models import (
     SignatureStatus,
     TransportProtocol,
 )
-from winsentinel.core.state import SystemState
-from winsentinel.monitors.network_monitor import diff_connections, inventory_events
-from winsentinel.monitors.process_monitor import inventory_events as process_inventory
+from threatlens.core.state import SystemState
+from threatlens.monitors.network_monitor import diff_connections, inventory_events
+from threatlens.monitors.process_monitor import inventory_events as process_inventory
 
 
 def snap(*processes: object, at: float) -> ProcessSnapshot:

@@ -9,19 +9,19 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from winsentinel.config import Config
-from winsentinel.core.models import RuleMetadata
-from winsentinel.detection.rules import rule_catalog
+from threatlens.config import Config
+from threatlens.core.models import RuleMetadata
+from threatlens.detection.rules import rule_catalog
 
 HEADER = """\
 # Detection Rules
 
-> Generated from the rule metadata in `src/winsentinel/detection/rules/` by
+> Generated from the rule metadata in `src/threatlens/detection/rules/` by
 > `scripts/generate_rule_docs.py`. Do not edit by hand.
 
 ## How to read a detection
 
-WinSentinel rules produce **signals, not verdicts**. Each detection carries:
+ThreatLens rules produce **signals, not verdicts**. Each detection carries:
 
 | Field | Meaning |
 |-------|---------|
@@ -52,9 +52,9 @@ Network rules that need the owner's signature **defer** a connection observed be
 enrichment finishes and evaluate it when `PROCESS_ENRICHED` arrives, so a validly signed
 application is never flagged merely because its first connection beat the signature check.
 
-`winsentinel inspect <PID>` replays the *current state* of one process through the rules.
+`threatlens inspect <PID>` replays the *current state* of one process through the rules.
 Rules that watch change over time (NET-001, NET-002, NET-003) only fire under
-`winsentinel monitor`.
+`threatlens monitor`.
 
 ## Rule summary
 

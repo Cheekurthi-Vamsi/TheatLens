@@ -11,7 +11,7 @@ import pytest
 pytestmark = pytest.mark.integration
 
 if sys.platform == "win32":
-    from winsentinel.response.process_control import ProcessController, ProcessIdentityChangedError
+    from threatlens.response.process_control import ProcessController, ProcessIdentityChangedError
 
 PYTHON = getattr(sys, "_base_executable", sys.executable)
 

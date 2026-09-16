@@ -12,7 +12,7 @@ import pytest
 pytestmark = pytest.mark.integration
 
 if sys.platform == "win32":
-    from winsentinel.utils.windows import empty_working_set
+    from threatlens.utils.windows import empty_working_set
 
 PYTHON = getattr(sys, "_base_executable", sys.executable)
 # Allocate and touch ~64 MB so it is resident, then idle.

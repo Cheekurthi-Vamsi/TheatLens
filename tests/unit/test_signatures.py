@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from winsentinel.core.models import SignatureStatus
-from winsentinel.security import signatures as sig
+from threatlens.core.models import SignatureStatus
+from threatlens.security import signatures as sig
 
 
 @pytest.mark.parametrize(

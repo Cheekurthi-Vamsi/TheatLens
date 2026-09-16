@@ -10,10 +10,10 @@ import logging
 from rich.console import Console
 
 from fixtures.fakes import process
-from winsentinel.logging_config import SafeFormatter, sanitize_log_value
-from winsentinel.ui.formatting import sanitize_display
-from winsentinel.ui.json_output import envelope, write_json
-from winsentinel.ui.process_views import process_table
+from threatlens.logging_config import SafeFormatter, sanitize_log_value
+from threatlens.ui.formatting import sanitize_display
+from threatlens.ui.json_output import envelope, write_json
+from threatlens.ui.process_views import process_table
 
 
 def test_sanitize_log_value_escapes_control_characters() -> None:
@@ -22,7 +22,7 @@ def test_sanitize_log_value_escapes_control_characters() -> None:
 
 def test_log_record_cannot_be_split_by_process_name() -> None:
     record = logging.LogRecord(
-        "winsentinel.test",
+        "threatlens.test",
         logging.INFO,
         __file__,
         1,

@@ -32,14 +32,14 @@ Its "CPU" is idle capacity. It is sorted last in `--sort cpu`.
 ## A socket shows `<pid reused>`, `<kernel>` or `<unattributed>`
 
 * `<pid reused>` — the socket is older than the process that now holds its PID; the original owner
-  exited. WinSentinel refuses to blame the new process.
+  exited. ThreatLens refuses to blame the new process.
 * `<kernel>` — owned by PID 4 (System): SMB, or `http.sys` listeners registered by IIS, WinRM or
   other services. The registering application is not visible in the socket table.
 * `<unattributed>` — PID 0 (a lingering `TIME_WAIT` entry) or a process that could not be found.
 
-## `winsentinel monitor` says another monitor is already running
+## `threatlens monitor` says another monitor is already running
 
-Only one engine runs per user. `winsentinel status` shows the running one (PID, uptime). The lock is
+Only one engine runs per user. `threatlens status` shows the running one (PID, uptime). The lock is
 released automatically when that process exits, even if it crashed.
 
 ## A process I started does not appear in `monitor`
@@ -62,7 +62,7 @@ fire in the running engine.
 
 ## A trusted application is flagged
 
-Every rule documents known false positives (`winsentinel rules show <RULE_ID>` or
+Every rule documents known false positives (`threatlens rules show <RULE_ID>` or
 `docs/detection-rules.md`). To silence an executable, add its **full path** to
 `detection.ignored_executables`; to turn a rule off, add its ID to `detection.disabled_rules`.
 Allowlisting by hash or signer arrives with baselines.
@@ -70,18 +70,18 @@ Allowlisting by hash or signer arrives with baselines.
 ## Git Bash's `bash.exe` shows SIG-001 (+10, LOW)
 
 Git for Windows ships `usr\bin\bash.exe` signed with a certificate that expired without a
-timestamp, so Windows reports the signature as not valid. WinSentinel scores this case lowest and
+timestamp, so Windows reports the signature as not valid. ThreatLens scores this case lowest and
 says so in the evidence.
 
 ## Saving JSON output from Windows PowerShell 5.1
 
 Windows PowerShell 5.1's `>` and `Out-File` write **UTF-16** by default, and piping one native
-program into another re-encodes text (adding a BOM). WinSentinel's own output is ASCII JSON, so:
+program into another re-encodes text (adding a BOM). ThreatLens's own output is ASCII JSON, so:
 
 ```powershell
-winsentinel processes --json | Out-File -Encoding ascii procs.json      # save to a file
-$data = winsentinel network --json | Out-String | ConvertFrom-Json      # use in PowerShell
-winsentinel monitor --json --duration 60 | Out-File -Encoding ascii events.jsonl
+threatlens processes --json | Out-File -Encoding ascii procs.json      # save to a file
+$data = threatlens network --json | Out-String | ConvertFrom-Json      # use in PowerShell
+threatlens monitor --json --duration 60 | Out-File -Encoding ascii events.jsonl
 ```
 
 PowerShell 7 and `cmd.exe` redirection (`>`) write the bytes unchanged.
@@ -106,6 +106,6 @@ succeeded; check `$LASTEXITCODE` (0 = success).
 
 ## Configuration errors
 
-`winsentinel config validate` prints each invalid key with the reason. Unknown keys are rejected
-on purpose so typos never silently fall back to defaults. `winsentinel config init` writes a
+`threatlens config validate` prints each invalid key with the reason. Unknown keys are rejected
+on purpose so typos never silently fall back to defaults. `threatlens config init` writes a
 commented template.

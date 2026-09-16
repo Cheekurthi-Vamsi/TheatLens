@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from winsentinel.core.models import ActionOutcome, ActionType, ResponseAction
-from winsentinel.errors import WinSentinelError
-from winsentinel.response.memory import MemoryTrimmer
-from winsentinel.response.process_control import ProcessController
-from winsentinel.response.protection import ProtectionPolicy
-from winsentinel.response.response_manager import ResponseManager
-from winsentinel.utils import windows
+from threatlens.core.models import ActionOutcome, ActionType, ResponseAction
+from threatlens.errors import ThreatLensError
+from threatlens.response.memory import MemoryTrimmer
+from threatlens.response.process_control import ProcessController
+from threatlens.response.protection import ProtectionPolicy
+from threatlens.response.response_manager import ResponseManager
+from threatlens.utils import windows
 
 
 def os_error(winerror: int) -> OSError:
@@ -87,5 +87,5 @@ def test_trim_memory_fails_when_nothing_was_accessible() -> None:
 def test_trim_memory_unavailable_without_trimmer() -> None:
     subject = manager(None, [])
     assert subject.can_trim_memory is False
-    with pytest.raises(WinSentinelError):
+    with pytest.raises(ThreatLensError):
         subject.trim_memory(reason="test")

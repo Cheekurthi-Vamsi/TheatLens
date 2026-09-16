@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from winsentinel.security.redaction import REDACTED, redact_command_line
+from threatlens.security.redaction import REDACTED, redact_command_line
 
 
 @pytest.mark.parametrize(

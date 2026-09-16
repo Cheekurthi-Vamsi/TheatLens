@@ -1,8 +1,8 @@
-"""Benign, self-cleaning test-lab scenarios for WinSentinel.
+"""Benign, self-cleaning test-lab scenarios for ThreatLens.
 
 Nothing here is malicious: harmless stand-ins (a renamed copy of ping.exe, an encoded
 Start-Sleep, a loopback socket) exercise the detection rules and clean up after themselves. Run
-`winsentinel monitor` in another terminal to watch. See scripts/lab/README.md.
+`threatlens monitor` in another terminal to watch. See scripts/lab/README.md.
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ def scenario_http_server() -> None:
 
 
 def _run_copy(name: str, note: str) -> None:
-    lab = Path(tempfile.gettempdir()) / "winsentinel-lab"
+    lab = Path(tempfile.gettempdir()) / "threatlens-lab"
     lab.mkdir(exist_ok=True)
     copy = lab / name
     shutil.copy2(PING, copy)
@@ -105,7 +105,7 @@ def scenario_chain() -> None:
 
 def scenario_drop_file() -> None:
     print("[7] Drop and delete an .exe in %TEMP% (expect FILE_CREATED + FILE-001)")
-    dropped = Path(tempfile.gettempdir()) / "winsentinel_lab_dropped.exe"
+    dropped = Path(tempfile.gettempdir()) / "threatlens_lab_dropped.exe"
     shutil.copy2(PING, dropped)
     _wait(4, "file created")
     with contextlib.suppress(OSError):
@@ -121,7 +121,7 @@ def scenario_run_key() -> None:
     import winreg
 
     key_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-    name = "WinSentinelLabRunKey"
+    name = "ThreatLensLabRunKey"
     with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE) as key:
         winreg.SetValueEx(key, name, 0, winreg.REG_SZ, r"C:\Windows\System32\calc.exe --lab")
     try:
@@ -157,7 +157,7 @@ def main() -> int:
     if not selected:
         parser.print_help()
         return 1
-    print("Run 'winsentinel monitor' in another terminal to watch.\n")
+    print("Run 'threatlens monitor' in another terminal to watch.\n")
     for scenario in selected:
         scenario()
         print()

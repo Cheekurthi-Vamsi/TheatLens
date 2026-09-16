@@ -1,7 +1,7 @@
 """PyInstaller entry point for ThreatLens.exe.
 
 Kept separate from the package so PyInstaller has a concrete script to analyse. Running the
-executable with no arguments opens the live dashboard (handled in ``winsentinel.cli.main``);
+executable with no arguments opens the live dashboard (handled in ``threatlens.cli.main``);
 any arguments are the normal CLI.
 """
 
@@ -12,7 +12,7 @@ import sys
 
 
 def main() -> int:
-    from winsentinel.cli import main as cli_main
+    from threatlens.cli import main as cli_main
 
     return cli_main()
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 import threading
 import time
 
-from winsentinel.core.event_bus import EventBus
-from winsentinel.core.models import EventType, SecurityEvent
+from threatlens.core.event_bus import EventBus
+from threatlens.core.models import EventType, SecurityEvent
 
 
 def event(event_type: EventType = EventType.PROCESS_STARTED, pid: int = 1) -> SecurityEvent:

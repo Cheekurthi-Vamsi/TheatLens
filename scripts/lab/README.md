@@ -1,16 +1,16 @@
-# WinSentinel test lab
+# ThreatLens test lab
 
-Benign, self-cleaning scenarios you can run on your own machine to see WinSentinel work. None of
+Benign, self-cleaning scenarios you can run on your own machine to see ThreatLens work. None of
 these are malicious: they use harmless stand-ins (a renamed copy of Windows' own `ping.exe`, an
 encoded `Start-Sleep`, a loopback socket) and clean up after themselves.
 
-Run WinSentinel in one terminal and a lab script in another:
+Run ThreatLens in one terminal and a lab script in another:
 
 ```powershell
 # terminal 1
-winsentinel monitor --stream --events all
+threatlens monitor --stream --events all
 # or the dashboard:
-winsentinel monitor
+threatlens monitor
 
 # terminal 2
 python scripts\lab\run_lab.py --all
@@ -18,7 +18,7 @@ python scripts\lab\run_lab.py --all
 
 ## Scenarios
 
-| # | Scenario | What WinSentinel should show |
+| # | Scenario | What ThreatLens should show |
 |---|----------|------------------------------|
 | 1 | `--http-server` — `python -m http.server` on a port | `python.exe`, a new `LISTENER_OPENED` on that port, NET-002 |
 | 2 | `--child-exe` — copy `ping.exe` to `%TEMP%`, run it | `PROCESS_STARTED`, PROC-001 (temp), and it pings only 127.0.0.1 |

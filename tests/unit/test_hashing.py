@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from winsentinel.security.hashing import (
+from threatlens.security.hashing import (
     FileHasher,
     FileTooLargeError,
     NotARegularFileError,

@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import timedelta
 
 from fixtures.fakes import BASE_TIME, minutes, process
-from winsentinel.core.models import EventType, ProcessSnapshot
-from winsentinel.monitors.process_monitor import diff_snapshots
+from threatlens.core.models import EventType, ProcessSnapshot
+from threatlens.monitors.process_monitor import diff_snapshots
 
 
 def snap(*processes: object, at: float = 5) -> ProcessSnapshot:

@@ -18,10 +18,10 @@ import pytest
 pytestmark = pytest.mark.integration
 
 if sys.platform == "win32":
-    from winsentinel.collectors.network_collector import NetworkCollector
-    from winsentinel.collectors.process_collector import ProcessCollector
-    from winsentinel.core.models import AddressScope, Attribution, ConnectionState, Direction
-    from winsentinel.correlation.process_network import (
+    from threatlens.collectors.network_collector import NetworkCollector
+    from threatlens.collectors.process_collector import ProcessCollector
+    from threatlens.core.models import AddressScope, Attribution, ConnectionState, Direction
+    from threatlens.correlation.process_network import (
         connection_chain,
         correlate,
         lookup_from_processes,

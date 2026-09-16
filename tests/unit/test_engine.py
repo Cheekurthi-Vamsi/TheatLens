@@ -17,12 +17,12 @@ from fixtures.fakes import (
     minutes,
     socket_entry,
 )
-from winsentinel.collectors.network_collector import NetworkCollector
-from winsentinel.collectors.process_collector import ProcessCollector
-from winsentinel.config import Config
-from winsentinel.core.engine import Engine
-from winsentinel.core.models import ComponentStatus, EngineState, EventType, SecurityEvent
-from winsentinel.core.status_file import StatusFile
+from threatlens.collectors.network_collector import NetworkCollector
+from threatlens.collectors.process_collector import ProcessCollector
+from threatlens.config import Config
+from threatlens.core.engine import Engine
+from threatlens.core.models import ComponentStatus, EngineState, EventType, SecurityEvent
+from threatlens.core.status_file import StatusFile
 
 
 def process_collector(source: FakeSource, clock: FakeClock) -> ProcessCollector:

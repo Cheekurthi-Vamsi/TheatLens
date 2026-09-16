@@ -15,12 +15,12 @@ pytestmark = pytest.mark.integration
 if sys.platform == "win32":
     import winreg
 
-    from winsentinel.collectors.persistence_collector import PersistenceCollector
-    from winsentinel.core.models import EventType
-    from winsentinel.monitors.persistence_monitor import PersistenceMonitor
+    from threatlens.collectors.persistence_collector import PersistenceCollector
+    from threatlens.core.models import EventType
+    from threatlens.monitors.persistence_monitor import PersistenceMonitor
 
 _RUN_KEY = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-_TEST_VALUE = "WinSentinelIntegrationTest"
+_TEST_VALUE = "ThreatLensIntegrationTest"
 
 
 def test_new_run_value_is_detected_as_added() -> None:

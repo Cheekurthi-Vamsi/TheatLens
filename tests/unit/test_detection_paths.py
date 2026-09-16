@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 
 from fixtures.detection import CONTEXT
-from winsentinel.detection.catalog import suspicious_parent_child
-from winsentinel.detection.paths import PathClassifier, PathContext, is_under, normalize
+from threatlens.detection.catalog import suspicious_parent_child
+from threatlens.detection.paths import PathClassifier, PathContext, is_under, normalize
 
 paths = PathClassifier(CONTEXT)
 

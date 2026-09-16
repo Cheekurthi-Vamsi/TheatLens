@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from winsentinel.core.models import (
+from threatlens.core.models import (
     Confidence,
     DetectionResult,
     Evidence,
@@ -8,9 +8,9 @@ from winsentinel.core.models import (
     RuleCategory,
     Severity,
 )
-from winsentinel.core.models.alert import AlertStatus
-from winsentinel.detection.alerting import AlertManager, build_alert
-from winsentinel.detection.scoring import score_detections
+from threatlens.core.models.alert import AlertStatus
+from threatlens.detection.alerting import AlertManager, build_alert
+from threatlens.detection.scoring import score_detections
 
 
 def detection(

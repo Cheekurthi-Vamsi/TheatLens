@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from fixtures.fakes import minutes
-from winsentinel.core.models import (
+from threatlens.core.models import (
     Confidence,
     DetectionResult,
     EventType,
@@ -14,11 +14,11 @@ from winsentinel.core.models import (
     RuleCategory,
     SecurityEvent,
 )
-from winsentinel.detection.alerting import build_alert
-from winsentinel.storage.database import Database
-from winsentinel.storage.migrations import LATEST_VERSION
-from winsentinel.storage.repositories import SecurityStore, alert_from_row
-from winsentinel.storage.writer import DatabaseWriter
+from threatlens.detection.alerting import build_alert
+from threatlens.storage.database import Database
+from threatlens.storage.migrations import LATEST_VERSION
+from threatlens.storage.repositories import SecurityStore, alert_from_row
+from threatlens.storage.writer import DatabaseWriter
 
 
 @pytest.fixture

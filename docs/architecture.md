@@ -1,8 +1,8 @@
-# WinSentinel Architecture
+# ThreatLens Architecture
 
 > **See what your Windows system is doing. Detect what shouldn't be happening. Respond safely.**
 
-This document is the engineering design for WinSentinel V1. It is written *before* most of the
+This document is the engineering design for ThreatLens V1. It is written *before* most of the
 code, and every phase is expected to conform to it (or update it deliberately).
 
 Contents
@@ -27,7 +27,7 @@ Contents
 
 ## 1. Requirements analysis
 
-WinSentinel is a **local-first, transparent, defensive** host monitor. The requirements reduce to
+ThreatLens is a **local-first, transparent, defensive** host monitor. The requirements reduce to
 five capabilities, in priority order:
 
 | # | Capability | Why it matters |
@@ -60,7 +60,7 @@ explains each in depth.
 
 ### 2.1 Processes
 
-| Constraint | Consequence for WinSentinel |
+| Constraint | Consequence for ThreatLens |
 |------------|-----------------------------|
 | **PIDs are reused quickly.** Windows recycles PIDs (multiples of 4) aggressively. | A PID alone is never an identity. We use **`process_key = "<pid>:<create_time_ms>"`**. |
 | **Parent PID is a creation-time snapshot**, not a live link (`InheritedFromUniqueProcessId`). The parent may exit and its PID may be reused by an unrelated process. | The tree builder validates `parent.create_time <= child.create_time`; otherwise the child is marked *orphaned* rather than attached to the wrong parent. |
@@ -92,7 +92,7 @@ There is **no standard-user, per-process DNS API**. Options, in order of prefere
 2. ETW provider `Microsoft-Windows-DNS-Client` — real-time sessions require admin (future).
 3. `DnsGetCacheDataTable` — undocumented, no process attribution. **Not used.**
 
-WinSentinel will never intercept, redirect or decrypt DNS/TLS traffic.
+ThreatLens will never intercept, redirect or decrypt DNS/TLS traffic.
 
 ### 2.4 Event logs
 
@@ -173,7 +173,7 @@ process per file; slow), raw packet capture (needs a driver, out of scope).
 | Suspend/resume/terminate other users' / elevated processes | ❌ | ✅ (not PPL) | |
 | Create/remove firewall rules | ❌ | ✅ | |
 
-WinSentinel **never self-elevates**. It detects elevation, reports reduced functionality, and
+ThreatLens **never self-elevates**. It detects elevation, reports reduced functionality, and
 continues.
 
 ---
@@ -258,12 +258,12 @@ No module imports `ui` or `cli` except `cli`. Rules never import `response`.
 
 | Thread | Work | Failure isolation |
 |--------|------|-------------------|
-| `winsentinel-process_monitor` | Poll processes → apply to state → publish lifecycle events | Exceptions caught by its `TaskRunner`: `DEGRADED` after 1 failure, `UNAVAILABLE` after 3, exponential backoff to `engine.max_backoff_seconds`. |
-| `winsentinel-network_monitor` | Poll sockets → correlate (resolving unseen PIDs on demand) → publish | Same, independently of the process monitor. |
-| `winsentinel-status_writer` | Atomically write `engine-status.json` | Same; a write failure never affects collection. |
-| `winsentinel-watchdog` | Mark any run exceeding `collectors.collector_timeout_seconds` as `TIMED_OUT` | Threads cannot be killed safely; the hung component is reported while others continue. |
-| `winsentinel-enrichment` | SHA256 + signature in Windows background mode; new processes before inventory | Per-item exception isolation; bounded queue with drop counter. |
-| `winsentinel-dispatcher` | Drain the bounded bus: state history → enrichment requests → stream → detection | Per-handler isolation; detection disables a rule after 10 consecutive failures. |
+| `threatlens-process_monitor` | Poll processes → apply to state → publish lifecycle events | Exceptions caught by its `TaskRunner`: `DEGRADED` after 1 failure, `UNAVAILABLE` after 3, exponential backoff to `engine.max_backoff_seconds`. |
+| `threatlens-network_monitor` | Poll sockets → correlate (resolving unseen PIDs on demand) → publish | Same, independently of the process monitor. |
+| `threatlens-status_writer` | Atomically write `engine-status.json` | Same; a write failure never affects collection. |
+| `threatlens-watchdog` | Mark any run exceeding `collectors.collector_timeout_seconds` as `TIMED_OUT` | Threads cannot be killed safely; the hung component is reported while others continue. |
+| `threatlens-enrichment` | SHA256 + signature in Windows background mode; new processes before inventory | Per-item exception isolation; bounded queue with drop counter. |
+| `threatlens-dispatcher` | Drain the bounded bus: state history → enrichment requests → stream → detection | Per-handler isolation; detection disables a rule after 10 consecutive failures. |
 | main | CLI; sleeps in 250 ms slices so Ctrl+C is delivered promptly | `KeyboardInterrupt` → ordered shutdown. |
 
 Startup: bus + enrichment start → first process poll and first network poll run synchronously
@@ -280,7 +280,7 @@ Shutdown order: stop scheduler threads → stop enrichment → drain the bus →
 ThreatLens/                           (repository root)
 ├── pyproject.toml
 ├── README.md  LICENSE  CONTRIBUTING.md  SECURITY.md  .gitignore  .env.example
-├── src/winsentinel/
+├── src/threatlens/
 │   ├── __init__.py  __main__.py
 │   ├── cli.py                        composition root + argparse commands
 │   ├── config.py                     pydantic config, TOML loading, defaults
@@ -341,7 +341,7 @@ Deviations from the suggested tree, and why:
 ## 7. Core data models
 
 All models are immutable pydantic v2 models (`frozen=True`, `extra="forbid"`) defined in the
-`core/models/` package and re-exported from `winsentinel.core.models`. Timestamps are
+`core/models/` package and re-exported from `threatlens.core.models`. Timestamps are
 timezone-aware UTC. JSON uses ISO-8601.
 
 > As built (Phases 1–5), a few names differ from this original plan: `Protocol` is
@@ -705,31 +705,31 @@ Global flags (accepted before *or* after the subcommand): `--json`, `-q/--quiet`
 `-v/--verbose`, `--config PATH`, `--no-color`, `--version`, `-h/--help`.
 
 ```
-winsentinel status [--no-self-test]                  engine + collector health, privileges, self-test
-winsentinel monitor [--interval S] [--duration S] [--events LIST] [--loopback]
+threatlens status [--no-self-test]                  engine + collector health, privileges, self-test
+threatlens monitor [--interval S] [--duration S] [--events LIST] [--loopback]
                                                      live event + detection stream (Rich dashboard: Phase 9)
-winsentinel processes [--sort cpu|memory|pid|name] [--limit N] [--user U] [--name SUBSTR] [--verify]
-winsentinel process <PID>                            one process, enriched (hash, signature)
-winsentinel inspect <PID>                            process + lineage + network + detections + risk
-winsentinel tree [--pid PID] [--depth N]
-winsentinel network   [--protocol tcp|udp] [--state S] [--pid PID] [--external] [--listening]
-winsentinel connections [--protocol] [--pid PID] [--external] [--verify]   non-listening sockets grouped by process
-winsentinel alerts [--severity S] [--today] [--status S] [--limit N]
-winsentinel alerts set-status <ALERT_ID> <STATUS>
-winsentinel events [--type T] [--since DURATION] [--pid PID]
-winsentinel persistence [--kind K]
-winsentinel baseline create [--name N] [--expires-days D]
-winsentinel baseline compare [--baseline ID]
-winsentinel baseline list | show <ID> | delete <ID>
-winsentinel rules [list | show <RULE_ID>]
-winsentinel suspend <PID>  [--yes] [--force-protected]
-winsentinel resume <PID>
-winsentinel terminate <PID> [--yes] [--force-protected]
-winsentinel firewall list | block-ip <IP> | block-port <PORT> [--protocol] | block-process <PATH> | unblock <RULE_NAME>
-winsentinel allow exe <PATH> | sha256 <HASH> | signer <NAME> [--path PATH] [--rules R,..] [--expires-days D]
-winsentinel logs [--tail N] [--level L]
-winsentinel config path | show | validate | init [--force]
-winsentinel db cleanup | vacuum | info
+threatlens processes [--sort cpu|memory|pid|name] [--limit N] [--user U] [--name SUBSTR] [--verify]
+threatlens process <PID>                            one process, enriched (hash, signature)
+threatlens inspect <PID>                            process + lineage + network + detections + risk
+threatlens tree [--pid PID] [--depth N]
+threatlens network   [--protocol tcp|udp] [--state S] [--pid PID] [--external] [--listening]
+threatlens connections [--protocol] [--pid PID] [--external] [--verify]   non-listening sockets grouped by process
+threatlens alerts [--severity S] [--today] [--status S] [--limit N]
+threatlens alerts set-status <ALERT_ID> <STATUS>
+threatlens events [--type T] [--since DURATION] [--pid PID]
+threatlens persistence [--kind K]
+threatlens baseline create [--name N] [--expires-days D]
+threatlens baseline compare [--baseline ID]
+threatlens baseline list | show <ID> | delete <ID>
+threatlens rules [list | show <RULE_ID>]
+threatlens suspend <PID>  [--yes] [--force-protected]
+threatlens resume <PID>
+threatlens terminate <PID> [--yes] [--force-protected]
+threatlens firewall list | block-ip <IP> | block-port <PORT> [--protocol] | block-process <PATH> | unblock <RULE_NAME>
+threatlens allow exe <PATH> | sha256 <HASH> | signer <NAME> [--path PATH] [--rules R,..] [--expires-days D]
+threatlens logs [--tail N] [--level L]
+threatlens config path | show | validate | init [--force]
+threatlens db cleanup | vacuum | info
 ```
 
 Exit codes: `0` success · `1` runtime error · `2` usage error · `3` insufficient privileges ·
@@ -738,7 +738,7 @@ Exit codes: `0` success · `1` runtime error · `2` usage error · `3` insuffici
 JSON output is an envelope with a stable schema name:
 
 ```json
-{ "schema": "winsentinel.processes", "schema_version": 1, "timestamp": "…", "processes": [ … ] }
+{ "schema": "threatlens.processes", "schema_version": 1, "timestamp": "…", "processes": [ … ] }
 ```
 
 ---
